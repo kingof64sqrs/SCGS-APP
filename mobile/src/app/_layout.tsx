@@ -11,6 +11,9 @@ import { AuthProvider, useAuth } from '@/context/auth-context';
 import { ThemeModeProvider } from '@/context/theme-context';
 import { useTheme } from '@/hooks/use-theme';
 
+// Ensure the app always starts on the splash/index, not a dynamic route.
+export const unstable_settings = { initialRouteName: 'index' };
+
 function RootNavigator() {
   const { token, isReady } = useAuth();
   const segments = useSegments();
@@ -31,6 +34,9 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="(app)" />
       <Stack.Screen
         name="member/[samajId]"
         options={{

@@ -78,7 +78,13 @@ export default function MemberDetailScreen() {
   const { samajId } = useLocalSearchParams<{ samajId: string }>();
   const { token } = useAuth();
   const { data: member, loading, error, refetch } = useAsyncData(
-    useCallback((signal) => api.getMember(samajId, token, signal), [samajId, token]),
+    useCallback(
+      (signal) =>
+        samajId
+          ? api.getMember(samajId, token, signal)
+          : Promise.reject(new Error('Member not found')),
+      [samajId, token],
+    ),
   );
 
   if (loading) return <Loading label="Loading…" />;
