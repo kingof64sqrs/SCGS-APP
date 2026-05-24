@@ -1,98 +1,207 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+const LOGO = require('@/assets/images/scgs-logo.png');
+
+export default function LoginScreen() {
+  const theme = useTheme();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <ThemedView style={styles.root}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            {/* Logo + heading */}
+            <View style={styles.header}>
+              <Image source={LOGO} style={styles.logo} contentFit="contain" />
+              <ThemedText type="subtitle" style={styles.title}>
+                Welcome Back
+              </ThemedText>
+              <ThemedText themeColor="textSecondary" style={styles.subtitle}>
+                Sign in to your SCGS account
+              </ThemedText>
+            </View>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+            {/* Form */}
+            <View style={styles.form}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                ]}>
+                <Ionicons name="mail-outline" size={20} color={theme.icon} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="Email"
+                  placeholderTextColor={theme.textSecondary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                />
+              </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                ]}>
+                <Ionicons name="lock-closed-outline" size={20} color={theme.icon} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="Password"
+                  placeholderTextColor={theme.textSecondary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="password"
+                />
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={theme.icon}
+                  />
+                </Pressable>
+              </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+              <Pressable style={styles.forgot} hitSlop={8}>
+                <ThemedText type="small" style={{ color: theme.tint }}>
+                  Forgot password?
+                </ThemedText>
+              </Pressable>
 
-        {Platform.OS === 'web' && <WebBadge />}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.button,
+                  { backgroundColor: theme.tint, opacity: pressed ? 0.85 : 1 },
+                ]}
+                accessibilityRole="button">
+                <ThemedText style={styles.buttonText}>Sign In</ThemedText>
+              </Pressable>
+            </View>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Don&apos;t have an account?{' '}
+              </ThemedText>
+              <Pressable hitSlop={8}>
+                <ThemedText type="smallBold" style={{ color: theme.tint }}>
+                  Sign Up
+                </ThemedText>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  },
+  flex: {
+    flex: 1,
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
+  content: {
+    flexGrow: 1,
     justifyContent: 'center',
-    flex: 1,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: MaxContentWidth,
     paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    paddingVertical: Spacing.five,
+    gap: Spacing.five,
+  },
+  header: {
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  logo: {
+    width: 140,
+    height: 140,
+    marginBottom: Spacing.two,
   },
   title: {
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+  subtitle: {
+    textAlign: 'center',
   },
-  stepContainer: {
+  form: {
     gap: Spacing.three,
-    alignSelf: 'stretch',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Spacing.three,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+    height: 52,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
+  },
+  forgot: {
+    alignSelf: 'flex-end',
+    marginTop: -Spacing.one,
+  },
+  button: {
+    height: 52,
+    borderRadius: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.one,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
