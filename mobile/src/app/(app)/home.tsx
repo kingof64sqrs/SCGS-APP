@@ -31,6 +31,14 @@ const QUICK_LINKS: QuickLink[] = [
   { href: '/contact', label: 'Contact Us', icon: 'call-outline' },
 ];
 
+function factIcon(label: string): keyof typeof Ionicons.glyphMap {
+  const l = label.toLowerCase();
+  if (l.includes('location')) return 'location-outline';
+  if (l.includes('area') || l.includes('building')) return 'business-outline';
+  if (l.includes('member')) return 'people-outline';
+  return 'calendar-outline';
+}
+
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -42,13 +50,16 @@ export default function HomeScreen() {
   if (loading) return <Loading label="Loading…" />;
   if (error || !about) return <ErrorView message={error ?? 'No data'} onRetry={refetch} />;
 
+  const heroStats = about.facts.slice(0, 2);
+  const detailFacts = about.facts.slice(2);
+
   return (
     <ScreenScroll onRefresh={refetch}>
       {/* Hero */}
       <Card style={styles.hero}>
         <Image source={LOGO} style={styles.logo} contentFit="contain" />
         <View style={styles.heroText}>
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
             Welcome{user ? `, ${user.name}` : ''}
           </ThemedText>
           <ThemedText type="smallBold">Shree Coimbatore Gujarati Samaj</ThemedText>
@@ -58,14 +69,18 @@ export default function HomeScreen() {
         </View>
       </Card>
 
-      {/* Stats */}
+      {/* Hero stats — short values only, never wrap */}
       <View style={styles.statsRow}>
-        {about.facts.slice(0, 3).map((fact) => (
+        {heroStats.map((fact) => (
           <Card key={fact.label} style={styles.statCard}>
-            <ThemedText type="subtitle" style={{ color: theme.tint }}>
+            <ThemedText
+              style={[styles.statValue, { color: theme.tint }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}>
               {fact.value}
             </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.statLabel}>
+            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
               {fact.label}
             </ThemedText>
           </Card>
@@ -86,7 +101,7 @@ export default function HomeScreen() {
               <View style={[styles.linkIcon, { backgroundColor: theme.tint }]}>
                 <Ionicons name={link.icon} size={22} color="#fff" />
               </View>
-              <ThemedText type="small" style={styles.linkLabel}>
+              <ThemedText type="small" style={styles.linkLabel} numberOfLines={2}>
                 {link.label}
               </ThemedText>
             </Card>
@@ -94,11 +109,40 @@ export default function HomeScreen() {
         ))}
       </View>
 
+      {/* At a glance — longer facts as wrap-friendly rows */}
+      {detailFacts.length > 0 ? (
+        <>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>
+            At a Glance
+          </ThemedText>
+          <Card style={styles.glanceCard}>
+            {detailFacts.map((fact, i) => (
+              <View
+                key={fact.label}
+                style={[
+                  styles.glanceRow,
+                  i > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
+                ]}>
+                <View style={[styles.glanceIcon, { backgroundColor: theme.backgroundSelected }]}>
+                  <Ionicons name={factIcon(fact.label)} size={18} color={theme.tint} />
+                </View>
+                <View style={styles.glanceText}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {fact.label}
+                  </ThemedText>
+                  <ThemedText type="small">{fact.value}</ThemedText>
+                </View>
+              </View>
+            ))}
+          </Card>
+        </>
+      ) : null}
+
       {/* About snippet */}
       <ThemedText type="smallBold" style={styles.sectionTitle}>
         About the Samaj
       </ThemedText>
-      <Card style={{ gap: Spacing.three }}>
+      <Card style={styles.aboutCard}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.snippet}>
           {about.paragraphs[0]}
         </ThemedText>
@@ -119,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
-  logo: { width: 64, height: 64 },
+  logo: { width: 60, height: 60 },
   heroText: { flex: 1, gap: 2 },
   statsRow: {
     flexDirection: 'row',
@@ -129,9 +173,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     gap: Spacing.one,
-    padding: Spacing.three,
+    paddingVertical: Spacing.four,
   },
-  statLabel: { textAlign: 'center' },
+  statValue: {
+    fontSize: 26,
+    lineHeight: 30,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   sectionTitle: { marginTop: Spacing.two },
   linksGrid: {
     flexDirection: 'row',
@@ -144,8 +193,10 @@ const styles = StyleSheet.create({
   },
   linkCard: {
     alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.two,
     padding: Spacing.three,
+    minHeight: 108,
   },
   linkIcon: {
     width: 44,
@@ -155,6 +206,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   linkLabel: { textAlign: 'center' },
+  glanceCard: { padding: 0, overflow: 'hidden' },
+  glanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.three,
+  },
+  glanceIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  glanceText: { flex: 1, gap: 2 },
+  aboutCard: { gap: Spacing.three },
   snippet: { lineHeight: 22 },
   readMore: {
     flexDirection: 'row',
