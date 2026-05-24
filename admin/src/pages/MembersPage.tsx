@@ -9,6 +9,7 @@ import { Avatar, Button, Form, Input, Modal, Popconfirm, Space, Table, Tag, Typo
 import { useEffect, useState } from 'react';
 
 import { api } from '../api';
+import { PhotoUpload } from '../PhotoUpload';
 
 type Member = {
   samajId: string;
@@ -184,6 +185,11 @@ export default function MembersPage() {
           <Form.Item name="address" label="Address" rules={[{ required: true }]}>
             <Input.TextArea rows={2} />
           </Form.Item>
+          {editing && (
+            <Form.Item label="Photo">
+              <PhotoUpload samajId={editing.samajId} />
+            </Form.Item>
+          )}
           {creating && (
             <Form.Item name="password" label="Password" rules={[{ required: true }]}>
               <Input />

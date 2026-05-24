@@ -3,8 +3,16 @@ import { Button, Form, Input, Modal, Popconfirm, Space, Table, Tag, Typography, 
 import { useEffect, useState } from 'react';
 
 import { api } from '../api';
+import { PhotoUpload } from '../PhotoUpload';
 
-type GBMember = { id: string; name: string; position: string; group: string; photoUrl: string };
+type GBMember = {
+  id: string;
+  name: string;
+  position: string;
+  group: string;
+  photoUrl?: string;
+  samajId?: string;
+};
 
 const GROUPS = ['Office Bearers', 'Members of the Governing Body', 'S.B.K.V Trustees (Represented by SCGS)'];
 
@@ -120,9 +128,11 @@ export default function GoverningBodyPage() {
           <Form.Item name="group" label="Group" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="photoUrl" label="Photo URL">
-            <Input placeholder="https://…" />
-          </Form.Item>
+          {editing && (
+            <Form.Item label="Photo">
+              <PhotoUpload samajId={editing.samajId} />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </>

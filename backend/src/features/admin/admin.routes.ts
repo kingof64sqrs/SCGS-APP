@@ -29,6 +29,7 @@ import {
   nextSamajId,
   setMemberPassword,
   updateMember,
+  updateMemberPhoto,
 } from "../members/member.model.js";
 
 export const adminRouter = Router();
@@ -53,6 +54,7 @@ const memberCreateSchema = z.object({
 });
 const memberUpdateSchema = memberCreateSchema.partial();
 const passwordSchema = z.object({ password: z.string().min(1) });
+const photoSchema = z.object({ contentType: z.string().min(1), base64: z.string().min(1) });
 
 adminRouter.get(
   "/members",
@@ -115,6 +117,16 @@ adminRouter.put(
   validateBody(passwordSchema),
   asyncHandler(async (req, res) => {
     const ok = await setMemberPassword(req.params.samajId, hashPassword(req.body.password));
+    if (!ok) throw new NotFoundError("Member not found");
+    res.json({ ok: true });
+  }),
+);
+
+adminRouter.put(
+  "/members/:samajId/photo",
+  validateBody(photoSchema),
+  asyncHandler(async (req, res) => {
+    const ok = await updateMemberPhoto(req.params.samajId, req.body);
     if (!ok) throw new NotFoundError("Member not found");
     res.json({ ok: true });
   }),
