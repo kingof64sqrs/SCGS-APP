@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { api } from '@/api/client';
+import type { Member } from '@/api/types';
 import { ErrorView } from '@/components/error-view';
 import { Loading } from '@/components/loading';
-import { MemberCard } from '@/components/member-card';
+import { MemberPhoto } from '@/components/member-photo';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -13,8 +15,32 @@ import { useAuth } from '@/context/auth-context';
 import { useAsyncData } from '@/hooks/use-async-data';
 import { useTheme } from '@/hooks/use-theme';
 
+function MemberRow({ member, onPress }: { member: Member; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.row,
+        { backgroundColor: theme.backgroundElement, borderColor: theme.border, opacity: pressed ? 0.7 : 1 },
+      ]}>
+      <MemberPhoto samajId={member.samajId} name={member.name} size={52} />
+      <View style={styles.rowText}>
+        <ThemedText type="smallBold" numberOfLines={1}>
+          {member.name}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+          {member.samajId}
+        </ThemedText>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+    </Pressable>
+  );
+}
+
 export default function MembersScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { token } = useAuth();
   const { data, loading, refreshing, error, refetch } = useAsyncData(
     useCallback((signal) => api.getMembers(token, signal), [token]),
@@ -29,9 +55,7 @@ export default function MembersScreen() {
       (m) =>
         m.name.toLowerCase().includes(q) ||
         m.samajId.toLowerCase().includes(q) ||
-        m.bloodGroup.toLowerCase().includes(q) ||
-        m.phone.includes(q) ||
-        m.email.toLowerCase().includes(q),
+        m.bloodGroup.toLowerCase().includes(q),
     );
   }, [data, query]);
 
@@ -43,13 +67,18 @@ export default function MembersScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(m) => m.samajId}
-        renderItem={({ item }) => <MemberCard member={item} />}
+        renderItem={({ item }) => (
+          <MemberRow
+            member={item}
+            onPress={() => router.push({ pathname: '/member/[samajId]', params: { samajId: item.samajId } })}
+          />
+        )}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={refetch}
         keyboardShouldPersistTaps="handled"
-        ItemSeparatorComponent={() => <View style={{ height: Spacing.three }} />}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.two }} />}
         ListHeaderComponent={
           <View style={styles.header}>
             <View
@@ -116,4 +145,14 @@ const styles = StyleSheet.create({
   },
   count: { marginLeft: Spacing.one },
   empty: { textAlign: 'center', marginTop: Spacing.five },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.two,
+    paddingRight: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Spacing.three,
+  },
+  rowText: { flex: 1, gap: 2 },
 });

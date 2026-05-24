@@ -1,11 +1,11 @@
 import type { Collection } from "mongodb";
 
 import { getDb } from "../../infrastructure/database/mongo.js";
-import type { Member, MemberDoc } from "./member.schema.js";
+import type { Member, MemberDoc, MemberPhoto } from "./member.schema.js";
 
 const COLLECTION = "members";
 
-/** Public fields only — drops Mongo's _id and the passwordHash. */
+/** Public fields only — drops _id, passwordHash and the (large) photo blob. */
 const PUBLIC_PROJECTION = {
   _id: 0,
   samajId: 1,
@@ -31,7 +31,13 @@ export function findMemberById(samajId: string): Promise<Member | null> {
   return membersCollection().findOne({ samajId }, { projection: PUBLIC_PROJECTION });
 }
 
-/** Includes the passwordHash — used only for authentication. */
+/** Auth lookup — keeps passwordHash, excludes _id and the photo blob. */
 export function findMemberByEmail(email: string): Promise<MemberDoc | null> {
-  return membersCollection().findOne({ email }, { projection: { _id: 0 } });
+  return membersCollection().findOne({ email }, { projection: { _id: 0, photo: 0 } });
+}
+
+/** Just the stored photo for a member (or null if none). */
+export async function findMemberPhoto(samajId: string): Promise<MemberPhoto | null> {
+  const doc = await membersCollection().findOne({ samajId }, { projection: { _id: 0, photo: 1 } });
+  return doc?.photo ?? null;
 }

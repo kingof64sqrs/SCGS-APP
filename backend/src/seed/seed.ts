@@ -5,7 +5,7 @@ import type { Facility } from "../features/facilities/facilities.schema.js";
 import { facilitySchema } from "../features/facilities/facilities.schema.js";
 import type { GoverningBodyMember } from "../features/governing-body/governing-body.schema.js";
 import { governingBodyMemberSchema } from "../features/governing-body/governing-body.schema.js";
-import type { MemberDoc } from "../features/members/member.schema.js";
+import type { MemberDoc, MemberPhoto } from "../features/members/member.schema.js";
 import { memberSchema } from "../features/members/member.schema.js";
 import { close, connect, getDb } from "../infrastructure/database/mongo.js";
 import { about } from "./data/about.data.js";
@@ -16,16 +16,38 @@ import { generateMembers } from "./data/members.data.js";
 /** Shared demo password for every seeded member. */
 const DEMO_PASSWORD = "test123";
 
+/** Download a portrait and return it base64-encoded for inline storage in Mongo. */
+async function fetchPhoto(index: number): Promise<MemberPhoto | undefined> {
+  try {
+    const res = await fetch(`https://i.pravatar.cc/300?img=${index}`);
+    if (!res.ok) return undefined;
+    const contentType = res.headers.get("content-type") ?? "image/jpeg";
+    const base64 = Buffer.from(await res.arrayBuffer()).toString("base64");
+    return { contentType, base64 };
+  } catch {
+    return undefined;
+  }
+}
+
 async function seed(): Promise<void> {
   await connect();
   const db = getDb();
   console.log("Connected to MongoDB for seeding.");
 
-  // Validate seed data against the feature schemas, then attach credentials.
-  const members: MemberDoc[] = generateMembers(10).map((m) => ({
-    ...memberSchema.parse(m),
-    passwordHash: hashPassword(DEMO_PASSWORD),
-  }));
+  // Validate seed data against the feature schemas, then attach credentials + photo.
+  const baseMembers = generateMembers(10).map((m) => memberSchema.parse(m));
+  const members: MemberDoc[] = await Promise.all(
+    baseMembers.map(async (m, i) => {
+      const photo = await fetchPhoto(i + 1);
+      return {
+        ...m,
+        passwordHash: hashPassword(DEMO_PASSWORD),
+        ...(photo ? { photo } : {}),
+      };
+    }),
+  );
+  const photosStored = members.filter((m) => m.photo).length;
+
   const governing: GoverningBodyMember[] = governingBody.map((g) =>
     governingBodyMemberSchema.parse(g),
   );
@@ -52,6 +74,7 @@ async function seed(): Promise<void> {
 
   console.log("Seed complete:");
   console.log(`  members:        ${membersResult.insertedCount} (password for all: "${DEMO_PASSWORD}")`);
+  console.log(`  member photos:  ${photosStored}/${members.length} stored in MongoDB`);
   console.log(`  governingBody:  ${gbResult.insertedCount}`);
   console.log(`  about:          1`);
   console.log(`  facilities:     ${facilitiesResult.insertedCount}`);

@@ -65,6 +65,9 @@ export const api = {
   getMembers: (token?: string | null, signal?: AbortSignal) =>
     request<Member[]>('/api/members', { token, signal }),
 
+  getMember: (samajId: string, token?: string | null, signal?: AbortSignal) =>
+    request<Member>(`/api/members/${samajId}`, { token, signal }),
+
   getGoverningBody: (token?: string | null, signal?: AbortSignal) =>
     request<GoverningBodyGroup[]>('/api/governing-body', { token, signal }),
 
