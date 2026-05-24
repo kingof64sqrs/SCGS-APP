@@ -11,7 +11,7 @@ import { close, connect, getDb } from "../infrastructure/database/mongo.js";
 import { about } from "./data/about.data.js";
 import { facilities } from "./data/facilities.data.js";
 import { governingBody } from "./data/governing-body.data.js";
-import { generateMembers } from "./data/members.data.js";
+import { emailFromName, generateMembers, randomContact } from "./data/members.data.js";
 
 /** Shared demo password for every seeded member. */
 const DEMO_PASSWORD = "test123";
@@ -34,23 +34,42 @@ async function seed(): Promise<void> {
   const db = getDb();
   console.log("Connected to MongoDB for seeding.");
 
-  // Validate seed data against the feature schemas, then attach credentials + photo.
+  // 1) Ten random directory members.
   const baseMembers = generateMembers(10).map((m) => memberSchema.parse(m));
-  const members: MemberDoc[] = await Promise.all(
+  const randomMembers: MemberDoc[] = await Promise.all(
     baseMembers.map(async (m, i) => {
       const photo = await fetchPhoto(i + 1);
+      return { ...m, passwordHash: hashPassword(DEMO_PASSWORD), ...(photo ? { photo } : {}) };
+    }),
+  );
+
+  // 2) Governing-body people also appear in the directory (dedup by name) with dummy details.
+  const governing: GoverningBodyMember[] = governingBody.map((g) =>
+    governingBodyMemberSchema.parse(g),
+  );
+  const seen = new Set<string>();
+  const uniqueGB = governing.filter((g) => (seen.has(g.name) ? false : (seen.add(g.name), true)));
+  const gbMembers: MemberDoc[] = await Promise.all(
+    uniqueGB.map(async (g, i) => {
+      const samajNum = 10 + i + 1;
+      const contact = randomContact();
+      const photo = await fetchPhoto(samajNum);
       return {
-        ...m,
+        samajId: `SCGS-${String(samajNum).padStart(4, "0")}`,
+        name: g.name,
+        email: emailFromName(g.name, samajNum),
+        phone: contact.phone,
+        address: contact.address,
+        bloodGroup: contact.bloodGroup,
         passwordHash: hashPassword(DEMO_PASSWORD),
         ...(photo ? { photo } : {}),
       };
     }),
   );
+
+  const members = [...randomMembers, ...gbMembers];
   const photosStored = members.filter((m) => m.photo).length;
 
-  const governing: GoverningBodyMember[] = governingBody.map((g) =>
-    governingBodyMemberSchema.parse(g),
-  );
   const aboutDoc: AboutContent = aboutSchema.parse(about);
   const facilityDocs: Facility[] = facilities.map((f) => facilitySchema.parse(f));
 
@@ -73,7 +92,9 @@ async function seed(): Promise<void> {
   await db.collection<MemberDoc>("members").createIndex({ email: 1 });
 
   console.log("Seed complete:");
-  console.log(`  members:        ${membersResult.insertedCount} (password for all: "${DEMO_PASSWORD}")`);
+  console.log(
+    `  members:        ${membersResult.insertedCount} (${randomMembers.length} random + ${gbMembers.length} governing-body; password "${DEMO_PASSWORD}")`,
+  );
   console.log(`  member photos:  ${photosStored}/${members.length} stored in MongoDB`);
   console.log(`  governingBody:  ${gbResult.insertedCount}`);
   console.log(`  about:          1`);

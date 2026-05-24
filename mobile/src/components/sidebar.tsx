@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-// Type only (erased at runtime) — SDK 56 expo-router vendors its own navigation fork.
-import type { DrawerContentComponentProps } from 'expo-router/build/react-navigation/drawer';
+import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

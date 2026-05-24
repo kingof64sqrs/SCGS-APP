@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SCGS Admin</title>
+    <style>
+      :root {
+        --bg: #0f172a; --panel: #1e293b; --panel2: #273449; --line: #334155;
+        --text: #e2e8f0; --muted: #94a3b8; --tint: #3b82f6; --danger: #ef4444;
+        --green: #22c55e; --radius: 10px;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg); color: var(--text); }
+      a { color: var(--tint); }
+      button { font: inherit; cursor: pointer; border: none; border-radius: 8px; padding: 8px 14px; }
+      .btn { background: var(--tint); color: #fff; }
+      .btn-sm { padding: 5px 10px; font-size: 13px; }
+      .btn-ghost { background: var(--panel2); color: var(--text); }
+      .btn-danger { background: var(--danger); color: #fff; }
+      .btn-green { background: var(--green); color: #fff; }
+      input, textarea, select { font: inherit; width: 100%; padding: 9px 11px; border-radius: 8px;
+        border: 1px solid var(--line); background: #0b1220; color: var(--text); }
+      textarea { min-height: 70px; resize: vertical; }
+      label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+
+      /* Login */
+      #login { max-width: 380px; margin: 12vh auto; padding: 28px; background: var(--panel);
+        border: 1px solid var(--line); border-radius: var(--radius); }
+      #login h1 { font-size: 20px; margin: 0 0 4px; }
+      #login p { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+      .err { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 8px; }
+
+      /* App shell */
+      header { display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+        background: var(--panel); border-bottom: 1px solid var(--line); }
+      header h1 { font-size: 17px; margin: 0; flex: 1; }
+      header .key { color: var(--muted); font-size: 12px; }
+      nav { display: flex; gap: 6px; padding: 12px 20px 0; flex-wrap: wrap; }
+      nav button { background: transparent; color: var(--muted); border-bottom: 2px solid transparent;
+        border-radius: 0; padding: 8px 12px; }
+      nav button.active { color: var(--text); border-bottom-color: var(--tint); }
+      main { padding: 18px 20px 60px; max-width: 1100px; margin: 0 auto; }
+      .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+      .toolbar h2 { font-size: 16px; margin: 0; flex: 1; }
+
+      table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: var(--radius);
+        overflow: hidden; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 14px;
+        vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+      tr:last-child td { border-bottom: none; }
+      td.actions { white-space: nowrap; display: flex; gap: 6px; }
+      .avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #0b1220; }
+      .muted { color: var(--muted); }
+
+      /* Modal */
+      .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex;
+        align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+      .modal { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+        width: 100%; max-width: 520px; max-height: 88vh; overflow: auto; padding: 22px; }
+      .modal h3 { margin: 0 0 6px; font-size: 17px; }
+      .modal .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: var(--panel2); border: 1px solid var(--line); padding: 10px 16px; border-radius: 8px;
+        font-size: 14px; z-index: 100; }
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <!-- Login -->
+    <div id="login">
+      <h1>SCGS Admin</h1>
+      <p>Enter the admin key to manage the app's data.</p>
+      <input id="keyInput" type="password" placeholder="Admin key" />
+      <div class="err" id="loginErr"></div>
+      <button class="btn" style="width:100%;margin-top:8px" id="loginBtn">Sign in</button>
+    </div>
+
+    <!-- App -->
+    <div id="app" class="hidden">
+      <header>
+        <h1>SCGS Admin</h1>
+        <span class="key" id="keyLabel"></span>
+        <button class="btn-ghost btn-sm" id="logoutBtn">Sign out</button>
+      </header>
+      <nav id="tabs">
+        <button data-tab="members" class="active">Members</button>
+        <button data-tab="governing">Governing Body</button>
+        <button data-tab="about">About</button>
+        <button data-tab="facilities">Facilities</button>
+      </nav>
+      <main id="content"></main>
+    </div>
+
+    <script>
+      const KEY_STORAGE = "scgs.adminKey";
+      let adminKey = localStorage.getItem(KEY_STORAGE) || "";
+
+      const $ = (sel) => document.querySelector(sel);
+      const el = (tag, props = {}, ...kids) => {
+        const e = document.createElement(tag);
+        Object.entries(props).forEach(([k, v]) => {
+          if (k === "class") e.className = v;
+          else if (k === "html") e.innerHTML = v;
+          else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+          else if (v != null) e.setAttribute(k, v);
+        });
+        kids.flat().forEach((c) => e.append(c?.nodeType ? c : document.createTextNode(c ?? "")));
+        return e;
+      };
+      const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+      function toast(msg) {
+        const t = el("div", { class: "toast" }, msg);
+        document.body.append(t);
+        setTimeout(() => t.remove(), 2200);
+      }
+
+      async function api(path, { method = "GET", body } = {}) {
+        const res = await fetch("/api" + path, {
+          method,
+          headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!res.ok) throw new Error((data && data.error) || "HTTP " + res.status);
+        return data;
+      }
+
+      // ---------- modal form ----------
+      // fields: [{ name, label, type?='text', value?, full?=false, options?:[] }]
+      function form(title, fields, onSubmit) {
+        return new Promise((resolve) => {
+          const inputs = {};
+          const body = el("div", { class: "grid2" });
+          fields.forEach((f) => {
+            const id = "f_" + f.name;
+            let input;
+            if (f.type === "textarea") input = el("textarea", { id });
+            else if (f.type === "select")
+              input = el("select", { id }, ...(f.options || []).map((o) => el("option", { value: o }, o)));
+            else input = el("input", { id, type: f.type || "text" });
+            if (f.value != null) input.value = f.value;
+            if (f.type === "select" && f.value != null) input.value = f.value;
+            inputs[f.name] = input;
+            const wrap = el("div", {}, el("label", { for: id }, f.label), input);
+            if (f.full || f.type === "textarea") wrap.style.gridColumn = "1 / -1";
+            body.append(wrap);
+          });
+          const errBox = el("div", { class: "err" });
+          const overlay = el("div", { class: "overlay" });
+          const close = () => { overlay.remove(); resolve(false); };
+          const submit = el("button", { class: "btn",
+            onclick: async () => {
+              const values = {};
+              Object.entries(inputs).forEach(([k, i]) => (values[k] = i.value));
+              try {
+                await onSubmit(values);
+                overlay.remove();
+                resolve(true);
+              } catch (e) { errBox.textContent = e.message; }
+            } }, "Save");
+          overlay.append(
+            el("div", { class: "modal" },
+              el("h3", {}, title), body, errBox,
+              el("div", { class: "row" }, el("button", { class: "btn-ghost", onclick: close }, "Cancel"), submit)
+            )
+          );
+          overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+          document.body.append(overlay);
+        });
+      }
+
+      // ---------- tabs ----------
+      const tabs = {
+        members: renderMembers,
+        governing: renderGoverning,
+        about: renderAbout,
+        facilities: renderFacilities,
+      };
+      function setTab(name) {
+        document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+        $("#content").innerHTML = "";
+        tabs[name]().catch((e) => ($("#content").innerHTML = '<p class="err">' + esc(e.message) + "</p>"));
+      }
+
+      // ---------- Members ----------
+      async function renderMembers() {
+        const list = await api("/admin/members");
+        const c = $("#content");
+        c.innerHTML = "";
+        c.append(
+          el("div", { class: "toolbar" },
+            el("h2", {}, "Members (" + list.length + ")"),
+            el("button", { class: "btn", onclick: () => addMember() }, "+ Add member"))
+        );
+        const rows = list.map((m) =>
+          el("tr", {},
+            el("td", {}, el("img", { class: "avatar", src: "/api/members/" + m.samajId + "/photo", onerror: function () { this.style.visibility = "hidden"; } })),
+            el("td", {}, el("strong", {}, m.name), el("div", { class: "muted" }, m.samajId)),
+            el("td", {}, m.email),
+            el("td", {}, m.phone),
+            el("td", {}, m.bloodGroup),
+            el("td", { class: "actions" },
+              el("button", { class: "btn-ghost btn-sm", onclick: () => editMember(m) }, "Edit"),
+              el("button", { class: "btn-green btn-sm", onclick: () => resetPassword(m) }, "Password"),
+              el("button", { class: "btn-danger btn-sm", onclick: () => removeMember(m) }, "Delete"))
+          )
+        );
+        c.append(table(["", "Name", "Email", "Phone", "Blood", ""], rows));
+      }
+      const memberFields = (m = {}) => [
+        { name: "name", label: "Name", value: m.name, full: true },
+        { name: "email", label: "Email (login)", value: m.email },
+        { name: "phone", label: "Phone", value: m.phone },
+        { name: "bloodGroup", label: "Blood group", value: m.bloodGroup || "O+" },
+        { name: "address", label: "Address", value: m.address, type: "textarea" },
+      ];
+      async function addMember() {
+        const ok = await form("Add member", [...memberFields(), { name: "password", label: "Password (default test123)", value: "test123" }],
+          (v) => api("/admin/members", { method: "POST", body: v }));
+        if (ok) { toast("Member added"); setTab("members"); }
+      }
+      async function editMember(m) {
+        const ok = await form("Edit member", memberFields(m),
+          (v) => api("/admin/members/" + m.samajId, { method: "PUT", body: v }));
+        if (ok) { toast("Saved"); setTab("members"); }
+      }
+      async function resetPassword(m) {
+        const ok = await form("Set password for " + m.name, [{ name: "password", label: "New password", value: "", full: true }],
+          (v) => api("/admin/members/" + m.samajId + "/password", { method: "PUT", body: v }));
+        if (ok) toast("Password updated");
+      }
+      async function removeMember(m) {
+        if (!confirm("Delete " + m.name + " (" + m.samajId + ")?")) return;
+        await api("/admin/members/" + m.samajId, { method: "DELETE" });
+        toast("Deleted"); setTab("members");
+      }
+
+      // ---------- Governing body ----------
+      async function renderGoverning() {
+        const list = await api("/admin/governing-body");
+        const c = $("#content");
+        c.innerHTML = "";
+        c.append(
+          el("div", { class: "toolbar" },
+            el("h2", {}, "Governing Body (" + list.length + ")"),
+            el("button", { class: "btn", onclick: () => editGB() }, "+ Add"))
+        );
+        const rows = list.map((g) =>
+          el("tr", {},
+            el("td", {}, el("strong", {}, g.name)),
+            el("td", {}, g.position),
+            el("td", {}, g.group),
+            el("td", { class: "actions" },
+              el("button", { class: "btn-ghost btn-sm", onclick: () => editGB(g) }, "Edit"),
+              el("button", { class: "btn-danger btn-sm", onclick: () => removeGB(g) }, "Delete"))
+          )
+        );
+        c.append(table(["Name", "Position", "Group", ""], rows));
+      }
+      async function editGB(g) {
+        const fields = [
+          { name: "name", label: "Name", value: g?.name, full: true },
+          { name: "position", label: "Position", value: g?.position, full: true },
+          { name: "group", label: "Group", value: g?.group || "Office Bearers", full: true },
+          { name: "photoUrl", label: "Photo URL", value: g?.photoUrl || "", full: true },
+        ];
+        const ok = await form(g ? "Edit member" : "Add governing body member", fields, (v) =>
+          g ? api("/admin/governing-body/" + g.id, { method: "PUT", body: v })
+            : api("/admin/governing-body", { method: "POST", body: v }));
+        if (ok) { toast("Saved"); setTab("governing"); }
+      }
+      async function removeGB(g) {
+        if (!confirm("Delete " + g.name + "?")) return;
+        await api("/admin/governing-body/" + g.id, { method: "DELETE" });
+        toast("Deleted"); setTab("governing");
+      }
+
+      // ---------- Facilities ----------
+      async function renderFacilities() {
+        const list = await api("/admin/facilities");
+        const c = $("#content");
+        c.innerHTML = "";
+        c.append(
+          el("div", { class: "toolbar" },
+            el("h2", {}, "Facilities (" + list.length + ")"),
+            el("button", { class: "btn", onclick: () => editFacility() }, "+ Add"))
+        );
+        const rows = list.map((f) =>
+          el("tr", {},
+            el("td", {}, el("strong", {}, f.name)),
+            el("td", {}, f.description),
+            el("td", { class: "actions" },
+              el("button", { class: "btn-ghost btn-sm", onclick: () => editFacility(f) }, "Edit"),
+              el("button", { class: "btn-danger btn-sm", onclick: () => removeFacility(f) }, "Delete"))
+          )
+        );
+        c.append(table(["Name", "Description", ""], rows));
+      }
+      async function editFacility(f) {
+        const fields = [
+          { name: "name", label: "Name", value: f?.name, full: true },
+          { name: "description", label: "Description", value: f?.description, type: "textarea" },
+        ];
+        const ok = await form(f ? "Edit facility" : "Add facility", fields, (v) =>
+          f ? api("/admin/facilities/" + f.id, { method: "PUT", body: v })
+            : api("/admin/facilities", { method: "POST", body: v }));
+        if (ok) { toast("Saved"); setTab("facilities"); }
+      }
+      async function removeFacility(f) {
+        if (!confirm("Delete " + f.name + "?")) return;
+        await api("/admin/facilities/" + f.id, { method: "DELETE" });
+        toast("Deleted"); setTab("facilities");
+      }
+
+      // ---------- About ----------
+      async function renderAbout() {
+        const a = await api("/admin/about");
+        const c = $("#content");
+        c.innerHTML = "";
+        const lines = (arr) => (arr || []).join("\n");
+        const facts = (a.facts || []).map((f) => f.label + " = " + f.value).join("\n");
+        const f = {};
+        const field = (key, label, value, type = "text") => {
+          const input = type === "textarea" ? el("textarea", {}) : el("input", { type });
+          input.value = value ?? "";
+          f[key] = input;
+          return el("div", {}, el("label", {}, label), input);
+        };
+        const box = el("div", { style: "background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;max-width:760px" },
+          field("title", "Title", a.title),
+          field("paragraphs", "Paragraphs (one per line)", lines(a.paragraphs), "textarea"),
+          field("facts", "Facts (Label = Value, one per line)", facts, "textarea"),
+          field("contactAddress", "Contact address", a.contact?.address),
+          field("contactPhone", "Contact phone", a.contact?.phone),
+          field("contactEmail", "Contact email", a.contact?.email),
+          field("facilities", "Facilities (one per line)", lines(a.facilities), "textarea"),
+          field("services", "Services (one per line)", lines(a.services), "textarea"),
+          el("div", { style: "margin-top:16px" },
+            el("button", { class: "btn", onclick: () => saveAbout(f) }, "Save About")));
+        c.append(el("div", { class: "toolbar" }, el("h2", {}, "About content")), box);
+      }
+      async function saveAbout(f) {
+        const splitLines = (t) => t.split("\n").map((s) => s.trim()).filter(Boolean);
+        const facts = splitLines(f.facts.value).map((l) => {
+          const [label, ...rest] = l.split("=");
+          return { label: label.trim(), value: rest.join("=").trim() };
+        });
+        const body = {
+          title: f.title.value.trim(),
+          paragraphs: splitLines(f.paragraphs.value),
+          facts,
+          contact: { address: f.contactAddress.value.trim(), phone: f.contactPhone.value.trim(), email: f.contactEmail.value.trim() },
+          facilities: splitLines(f.facilities.value),
+          services: splitLines(f.services.value),
+        };
+        try { await api("/admin/about", { method: "PUT", body }); toast("About saved"); }
+        catch (e) { alert(e.message); }
+      }
+
+      function table(headers, rows) {
+        return el("table", {},
+          el("thead", {}, el("tr", {}, ...headers.map((h) => el("th", {}, h)))),
+          el("tbody", {}, ...rows));
+      }
+
+      // ---------- auth / boot ----------
+      async function showApp() {
+        $("#login").classList.add("hidden");
+        $("#app").classList.remove("hidden");
+        $("#keyLabel").textContent = "key: " + adminKey.replace(/./g, "•");
+        setTab("members");
+      }
+      function showLogin(msg) {
+        $("#app").classList.add("hidden");
+        $("#login").classList.remove("hidden");
+        if (msg) $("#loginErr").textContent = msg;
+      }
+      async function doLogin(key) {
+        adminKey = key;
+        await api("/admin/verify");
+        localStorage.setItem(KEY_STORAGE, key);
+        showApp();
+      }
+
+      $("#loginBtn").addEventListener("click", async () => {
+        $("#loginErr").textContent = "";
+        try { await doLogin($("#keyInput").value.trim()); }
+        catch { $("#loginErr").textContent = "Invalid admin key"; }
+      });
+      $("#keyInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#loginBtn").click(); });
+      $("#logoutBtn").addEventListener("click", () => { localStorage.removeItem(KEY_STORAGE); adminKey = ""; showLogin(); });
+      document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
+
+      // Auto-login if a stored key still works.
+      (async () => {
+        if (adminKey) {
+          try { await api("/admin/verify"); showApp(); return; } catch {}
+        }
+        showLogin();
+      })();
+    </script>
+  </body>
+</html>

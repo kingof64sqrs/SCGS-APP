@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
+import { MemberPhoto } from '@/components/member-photo';
 import { ScreenScroll } from '@/components/screen-scroll';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -45,6 +46,7 @@ function DetailRow({
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const { mode, setMode } = useThemeMode();
 
@@ -54,7 +56,7 @@ export default function ProfileScreen() {
     <ScreenScroll>
       {/* Profile header */}
       <Card style={styles.headerCard}>
-        <Avatar name={user.name} size={84} />
+        <MemberPhoto samajId={user.samajId} name={user.name} size={84} />
         <ThemedText type="subtitle" style={styles.name}>
           {user.name}
         </ThemedText>
@@ -71,6 +73,17 @@ export default function ProfileScreen() {
             </ThemedText>
           </View>
         </View>
+        <Pressable
+          onPress={() => router.push('/edit-profile')}
+          style={({ pressed }) => [
+            styles.editBtn,
+            { borderColor: theme.border, opacity: pressed ? 0.7 : 1 },
+          ]}>
+          <Ionicons name="create-outline" size={18} color={theme.tint} />
+          <ThemedText type="smallBold" style={{ color: theme.tint }}>
+            Edit Profile
+          </ThemedText>
+        </Pressable>
       </Card>
 
       {/* Details */}
@@ -153,6 +166,16 @@ const styles = StyleSheet.create({
   bloodText: {
     color: '#fff',
     fontWeight: '700',
+  },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    marginTop: Spacing.one,
   },
   sectionTitle: {
     marginTop: Spacing.two,

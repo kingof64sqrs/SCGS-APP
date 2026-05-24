@@ -1,7 +1,6 @@
 import 'react-native-gesture-handler';
 
-import { useRouter, useSegments } from 'expo-router';
-import { Stack } from 'expo-router/stack';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';

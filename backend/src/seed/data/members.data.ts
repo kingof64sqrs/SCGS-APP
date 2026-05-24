@@ -52,3 +52,25 @@ export function generateMembers(count: number): Member[] {
   }
   return members;
 }
+
+/** Random dummy contact details (for governing-body members added to the directory). */
+export function randomContact(): { phone: string; address: string; bloodGroup: string } {
+  return {
+    phone: `+91 9${randomDigits(9)}`,
+    address: pick(addresses),
+    bloodGroup: pick(bloodGroups),
+  };
+}
+
+/** Derive a unique login email from a person's name + a numeric suffix. */
+export function emailFromName(name: string, suffix: number): string {
+  const local =
+    name
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, "")
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .join(".") || "member";
+  return `${local}${suffix}@scgs.org`;
+}

@@ -1,4 +1,4 @@
-import type { Collection } from "mongodb";
+import type { Collection, Filter } from "mongodb";
 
 import { getDb } from "../../infrastructure/database/mongo.js";
 import type { Member, MemberDoc, MemberPhoto } from "./member.schema.js";
@@ -40,4 +40,47 @@ export function findMemberByEmail(email: string): Promise<MemberDoc | null> {
 export async function findMemberPhoto(samajId: string): Promise<MemberPhoto | null> {
   const doc = await membersCollection().findOne({ samajId }, { projection: { _id: 0, photo: 1 } });
   return doc?.photo ?? null;
+}
+
+// --- Mutations (admin + self-service) ---
+
+/** Next sequential samajId, e.g. "SCGS-0026". */
+export async function nextSamajId(): Promise<string> {
+  const [last] = await membersCollection()
+    .find({}, { projection: { _id: 0, samajId: 1 } })
+    .sort({ samajId: -1 })
+    .limit(1)
+    .toArray();
+  const lastNum = last ? Number.parseInt(last.samajId.replace(/\D/g, ""), 10) || 0 : 0;
+  return `SCGS-${String(lastNum + 1).padStart(4, "0")}`;
+}
+
+export async function insertMember(doc: MemberDoc): Promise<void> {
+  await membersCollection().insertOne(doc);
+}
+
+export async function updateMember(samajId: string, patch: Partial<Member>): Promise<boolean> {
+  const result = await membersCollection().updateOne({ samajId }, { $set: patch });
+  return result.matchedCount > 0;
+}
+
+export async function deleteMember(samajId: string): Promise<boolean> {
+  const result = await membersCollection().deleteOne({ samajId });
+  return result.deletedCount > 0;
+}
+
+export async function setMemberPassword(samajId: string, passwordHash: string): Promise<boolean> {
+  const result = await membersCollection().updateOne({ samajId }, { $set: { passwordHash } });
+  return result.matchedCount > 0;
+}
+
+export async function updateMemberPhoto(samajId: string, photo: MemberPhoto): Promise<boolean> {
+  const result = await membersCollection().updateOne({ samajId }, { $set: { photo } });
+  return result.matchedCount > 0;
+}
+
+export async function emailExists(email: string, exceptSamajId?: string): Promise<boolean> {
+  const filter: Filter<MemberDoc> = { email };
+  if (exceptSamajId) filter.samajId = { $ne: exceptSamajId };
+  return (await membersCollection().countDocuments(filter)) > 0;
 }

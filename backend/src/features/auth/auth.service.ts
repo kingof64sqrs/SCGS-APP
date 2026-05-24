@@ -1,7 +1,6 @@
-import { randomBytes } from "node:crypto";
-
 import { UnauthorizedError } from "../../core/errors/http-error.js";
 import { verifyPassword } from "../../core/security/password.js";
+import { createToken } from "../../core/security/token.js";
 import { findAllMembers, findMemberByEmail } from "../members/member.model.js";
 import type { AuthUser, DemoAccount, LoginInput, LoginResponse } from "./auth.schema.js";
 
@@ -24,7 +23,7 @@ export async function login(input: LoginInput): Promise<LoginResponse> {
     bloodGroup: member.bloodGroup,
   };
 
-  return { token: randomBytes(24).toString("hex"), user };
+  return { token: createToken(member.samajId), user };
 }
 
 /** Demo helper: list member accounts (name + email) for the login screen. */

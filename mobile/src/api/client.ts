@@ -1,12 +1,15 @@
 import { API_BASE_URL } from './config';
 import type {
   AboutContent,
+  AuthUser,
   DemoAccount,
   Facility,
   GoverningBodyGroup,
   LoginResponse,
   Member,
 } from './types';
+
+type ProfilePatch = Partial<Pick<AuthUser, 'name' | 'phone' | 'address' | 'bloodGroup'>>;
 
 export class ApiError extends Error {
   status: number;
@@ -61,6 +64,18 @@ export const api = {
 
   getDemoAccounts: (signal?: AbortSignal) =>
     request<DemoAccount[]>('/api/auth/demo-accounts', { signal }),
+
+  getMe: (token: string | null, signal?: AbortSignal) =>
+    request<AuthUser>('/api/me', { token, signal }),
+
+  updateProfile: (token: string | null, patch: ProfilePatch, signal?: AbortSignal) =>
+    request<AuthUser>('/api/me', { method: 'PUT', body: patch, token, signal }),
+
+  updatePhoto: (
+    token: string | null,
+    photo: { contentType: string; base64: string },
+    signal?: AbortSignal,
+  ) => request<{ ok: boolean }>('/api/me/photo', { method: 'PUT', body: photo, token, signal }),
 
   getMembers: (token?: string | null, signal?: AbortSignal) =>
     request<Member[]>('/api/members', { token, signal }),
