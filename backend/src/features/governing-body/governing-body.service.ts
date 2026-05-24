@@ -13,7 +13,7 @@ function rank(group: string): number {
   return i === -1 ? Number.MAX_SAFE_INTEGER : i;
 }
 
-/** Fetch all governing-body members and group them for the client. */
+/** Fetch all governing-body members and group them for the client (photo via samajId). */
 export async function listGoverningBody(): Promise<GoverningBodyGroup[]> {
   const docs = await findAllGoverningBody();
 
@@ -23,7 +23,7 @@ export async function listGoverningBody(): Promise<GoverningBodyGroup[]> {
     byGroup.get(doc.group)!.push({
       name: doc.name,
       position: doc.position,
-      photoUrl: doc.photoUrl,
+      samajId: doc.samajId,
     });
   }
 

@@ -1,29 +1,30 @@
-import { Image } from 'expo-image';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { GoverningBodyPerson } from '@/api/types';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { Avatar } from './avatar';
 import { Card } from './card';
+import { MemberPhoto } from './member-photo';
 import { ThemedText } from './themed-text';
 
 const PHOTO_SIZE = 64;
 
-export function PersonCard({ person }: { person: GoverningBodyPerson }) {
-  const [failed, setFailed] = useState(false);
-  const showPhoto = !!person.photoUrl && !failed;
+export function PersonCard({
+  person,
+  onPress,
+}: {
+  person: GoverningBodyPerson;
+  onPress?: () => void;
+}) {
+  const theme = useTheme();
+  const tappable = !!onPress && !!person.samajId;
 
-  return (
+  const inner = (
     <Card style={styles.card}>
-      {showPhoto ? (
-        <Image
-          source={{ uri: person.photoUrl }}
-          style={styles.photo}
-          contentFit="cover"
-          transition={200}
-          onError={() => setFailed(true)}
-        />
+      {person.samajId ? (
+        <MemberPhoto samajId={person.samajId} name={person.name} size={PHOTO_SIZE} />
       ) : (
         <Avatar name={person.name} size={PHOTO_SIZE} />
       )}
@@ -35,8 +36,18 @@ export function PersonCard({ person }: { person: GoverningBodyPerson }) {
           {person.position}
         </ThemedText>
       </View>
+      {tappable ? <Ionicons name="chevron-forward" size={18} color={theme.icon} /> : null}
     </Card>
   );
+
+  if (tappable) {
+    return (
+      <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
+        {inner}
+      </Pressable>
+    );
+  }
+  return inner;
 }
 
 const styles = StyleSheet.create({
@@ -45,12 +56,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
     padding: Spacing.three,
-  },
-  photo: {
-    width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
-    borderRadius: PHOTO_SIZE / 2,
-    backgroundColor: '#00000010',
   },
   text: {
     flex: 1,

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -12,6 +13,7 @@ import { useAuth } from '@/context/auth-context';
 import { useAsyncData } from '@/hooks/use-async-data';
 
 export default function GoverningBodyScreen() {
+  const router = useRouter();
   const { token } = useAuth();
   const { data, loading, refreshing, error, refetch } = useAsyncData(
     useCallback((signal) => api.getGoverningBody(token, signal), [token]),
@@ -28,7 +30,15 @@ export default function GoverningBodyScreen() {
             {group.group}
           </ThemedText>
           {group.members.map((person, i) => (
-            <PersonCard key={`${group.group}-${i}`} person={person} />
+            <PersonCard
+              key={`${group.group}-${i}`}
+              person={person}
+              onPress={
+                person.samajId
+                  ? () => router.push({ pathname: '/member/[samajId]', params: { samajId: person.samajId! } })
+                  : undefined
+              }
+            />
           ))}
         </View>
       ))}

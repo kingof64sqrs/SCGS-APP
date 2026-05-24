@@ -10,7 +10,7 @@ export type Member = {
 export type GoverningBodyPerson = {
   name: string;
   position: string;
-  photoUrl: string;
+  samajId?: string;
 };
 
 export type GoverningBodyGroup = {

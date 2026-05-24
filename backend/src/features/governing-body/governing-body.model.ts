@@ -11,7 +11,7 @@ export function governingBodyCollection(): Collection<GoverningBodyMember> {
 
 export function findAllGoverningBody(): Promise<GoverningBodyMember[]> {
   return governingBodyCollection()
-    .find({}, { projection: { _id: 0, name: 1, position: 1, photoUrl: 1, group: 1 } })
+    .find({}, { projection: { _id: 0, name: 1, position: 1, photoUrl: 1, group: 1, samajId: 1 } })
     .toArray();
 }
 
@@ -24,6 +24,7 @@ export async function listGoverningBodyDocs(): Promise<(GoverningBodyMember & { 
     position: d.position,
     photoUrl: d.photoUrl,
     group: d.group,
+    samajId: d.samajId,
   }));
 }
 
