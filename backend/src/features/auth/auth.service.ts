@@ -1,27 +1,34 @@
 import { randomBytes } from "node:crypto";
 
-import type { LoginInput, LoginResponse } from "./auth.schema.js";
-
-/** Derive a display name from the local-part of an email, title-cased. */
-function deriveName(email: string): string {
-  const localPart = email.split("@")[0] ?? email;
-  return localPart
-    .split(/[._-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(" ");
-}
+import { UnauthorizedError } from "../../core/errors/http-error.js";
+import { verifyPassword } from "../../core/security/password.js";
+import { findAllMembers, findMemberByEmail } from "../members/member.model.js";
+import type { AuthUser, DemoAccount, LoginInput, LoginResponse } from "./auth.schema.js";
 
 /**
- * DUMMY auth: the input has already been validated (non-empty email + password),
- * so we simply mint a token and echo back a derived user profile.
+ * Authenticate a member by email + password. Every member shares the demo
+ * password "test123" (see the seed). Returns a token plus the member profile.
  */
-export function login(input: LoginInput): LoginResponse {
-  return {
-    token: randomBytes(24).toString("hex"),
-    user: {
-      name: deriveName(input.email),
-      email: input.email,
-    },
+export async function login(input: LoginInput): Promise<LoginResponse> {
+  const member = await findMemberByEmail(input.email.toLowerCase());
+  if (!member || !verifyPassword(input.password, member.passwordHash)) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+
+  const user: AuthUser = {
+    samajId: member.samajId,
+    name: member.name,
+    email: member.email,
+    phone: member.phone,
+    address: member.address,
+    bloodGroup: member.bloodGroup,
   };
+
+  return { token: randomBytes(24).toString("hex"), user };
+}
+
+/** Demo helper: list member accounts (name + email) for the login screen. */
+export async function listDemoAccounts(): Promise<DemoAccount[]> {
+  const members = await findAllMembers();
+  return members.map((m) => ({ name: m.name, email: m.email }));
 }

@@ -5,10 +5,10 @@ import type { DrawerContentComponentProps } from 'expo-router/build/react-naviga
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/avatar';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
-import { useThemeMode, type ThemeMode } from '@/context/theme-context';
 import { useTheme } from '@/hooks/use-theme';
 
 const LOGO = require('@/assets/images/scgs-logo.png');
@@ -26,19 +26,13 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'about', label: 'About Us', icon: 'information-circle-outline' },
   { name: 'facilities', label: 'Facilities', icon: 'business-outline' },
   { name: 'contact', label: 'Contact Us', icon: 'call-outline' },
-];
-
-const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { mode: 'light', label: 'Light', icon: 'sunny-outline' },
-  { mode: 'dark', label: 'Dark', icon: 'moon-outline' },
-  { mode: 'system', label: 'Auto', icon: 'phone-portrait-outline' },
+  { name: 'profile', label: 'Profile', icon: 'person-outline' },
 ];
 
 export function Sidebar(props: DrawerContentComponentProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { user, signOut } = useAuth();
-  const { mode, setMode } = useThemeMode();
+  const { user } = useAuth();
 
   const activeRoute = props.state.routes[props.state.index]?.name;
 
@@ -53,15 +47,28 @@ export function Sidebar(props: DrawerContentComponentProps) {
           <ThemedText type="smallBold" style={styles.brand}>
             Shree Coimbatore{'\n'}Gujarati Samaj
           </ThemedText>
-          {user ? (
-            <View style={[styles.userChip, { backgroundColor: theme.backgroundElement }]}>
-              <Ionicons name="person-circle-outline" size={18} color={theme.tint} />
+        </View>
+
+        {/* Tappable user card -> profile */}
+        {user ? (
+          <Pressable
+            onPress={() => props.navigation.navigate('profile')}
+            style={({ pressed }) => [
+              styles.userCard,
+              { backgroundColor: theme.backgroundElement, opacity: pressed ? 0.7 : 1 },
+            ]}>
+            <Avatar name={user.name} size={40} />
+            <View style={styles.userText}>
               <ThemedText type="small" numberOfLines={1} style={styles.userName}>
                 {user.name}
               </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                {user.samajId}
+              </ThemedText>
             </View>
-          ) : null}
-        </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.icon} />
+          </Pressable>
+        ) : null}
 
         {/* Navigation */}
         <View style={styles.nav}>
@@ -84,36 +91,11 @@ export function Sidebar(props: DrawerContentComponentProps) {
         </View>
       </ScrollView>
 
-      {/* Footer: theme switch + logout */}
+      {/* Footer */}
       <View style={[styles.footer, { borderTopColor: theme.border, paddingBottom: insets.bottom + Spacing.three }]}>
-        <ThemedText type="small" themeColor="textSecondary" style={styles.footerLabel}>
-          Appearance
+        <ThemedText type="small" themeColor="textSecondary" style={styles.footerText}>
+          Charity &amp; Service · Coimbatore
         </ThemedText>
-        <View style={[styles.themeRow, { backgroundColor: theme.backgroundElement }]}>
-          {THEME_OPTIONS.map((opt) => {
-            const active = mode === opt.mode;
-            return (
-              <Pressable
-                key={opt.mode}
-                onPress={() => setMode(opt.mode)}
-                style={[styles.themeBtn, active && { backgroundColor: theme.tint }]}>
-                <Ionicons name={opt.icon} size={16} color={active ? '#fff' : theme.icon} />
-                <ThemedText type="small" style={{ color: active ? '#fff' : theme.textSecondary }}>
-                  {opt.label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <Pressable
-          onPress={signOut}
-          style={({ pressed }) => [styles.logout, { opacity: pressed ? 0.7 : 1 }]}>
-          <Ionicons name="log-out-outline" size={20} color="#DC2626" />
-          <ThemedText type="smallBold" style={{ color: '#DC2626' }}>
-            Log Out
-          </ThemedText>
-        </Pressable>
       </View>
     </View>
   );
@@ -131,16 +113,16 @@ const styles = StyleSheet.create({
   },
   logo: { width: 72, height: 72 },
   brand: { textAlign: 'center' },
-  userChip: {
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.one,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
+    gap: Spacing.two,
+    marginHorizontal: Spacing.two,
+    marginTop: Spacing.three,
+    padding: Spacing.two,
     borderRadius: Spacing.three,
-    maxWidth: '100%',
-    marginTop: Spacing.one,
   },
+  userText: { flex: 1, gap: 1 },
   userName: { flexShrink: 1 },
   nav: {
     paddingHorizontal: Spacing.two,
@@ -158,30 +140,6 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     padding: Spacing.three,
-    gap: Spacing.two,
   },
-  footerLabel: { marginLeft: Spacing.one },
-  themeRow: {
-    flexDirection: 'row',
-    borderRadius: Spacing.three,
-    padding: Spacing.half,
-    gap: Spacing.half,
-  },
-  themeBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.one,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
-  },
-  logout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-  },
+  footerText: { textAlign: 'center' },
 });

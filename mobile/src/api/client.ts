@@ -1,6 +1,7 @@
 import { API_BASE_URL } from './config';
 import type {
   AboutContent,
+  DemoAccount,
   Facility,
   GoverningBodyGroup,
   LoginResponse,
@@ -57,6 +58,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 export const api = {
   login: (email: string, password: string, signal?: AbortSignal) =>
     request<LoginResponse>('/api/auth/login', { method: 'POST', body: { email, password }, signal }),
+
+  getDemoAccounts: (signal?: AbortSignal) =>
+    request<DemoAccount[]>('/api/auth/demo-accounts', { signal }),
 
   getMembers: (token?: string | null, signal?: AbortSignal) =>
     request<Member[]>('/api/members', { token, signal }),

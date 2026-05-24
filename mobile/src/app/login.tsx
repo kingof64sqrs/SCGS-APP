@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -14,14 +14,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { api } from '@/api/client';
+import { Avatar } from '@/components/avatar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
+import { useAsyncData } from '@/hooks/use-async-data';
 import { useTheme } from '@/hooks/use-theme';
 
 const LOGO = require('@/assets/images/scgs-logo.png');
 const CARD_MAX_WIDTH = 420;
+const DEMO_PASSWORD = 'test123';
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -30,11 +34,21 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { data: demoAccounts } = useAsyncData(useCallback((signal) => api.getDemoAccounts(signal), []));
+
   const isWide = width >= 600;
-  const logoSize = Math.round(Math.min(140, Math.max(96, width * 0.32)));
+  const logoSize = Math.round(Math.min(132, Math.max(96, width * 0.3)));
+
+  const fillDemo = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword(DEMO_PASSWORD);
+    setShowDemo(false);
+    setError(null);
+  };
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -46,7 +60,6 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await signIn(email, password);
-      // Navigation is handled by the root navigator once the token is set.
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed. Please try again.');
     } finally {
@@ -166,11 +179,61 @@ export default function LoginScreen() {
                     <ThemedText style={styles.buttonText}>Sign In</ThemedText>
                   )}
                 </Pressable>
-
-                <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
-                  Demo login — enter any email and password to continue.
-                </ThemedText>
               </View>
+
+              {/* Demo accounts */}
+              {demoAccounts && demoAccounts.length > 0 ? (
+                <View style={styles.demoSection}>
+                  <Pressable
+                    onPress={() => setShowDemo((v) => !v)}
+                    style={styles.demoToggle}
+                    hitSlop={6}>
+                    <Ionicons name="people-circle-outline" size={18} color={theme.tint} />
+                    <ThemedText type="small" style={{ color: theme.tint, flex: 1 }}>
+                      Demo accounts (password: {DEMO_PASSWORD})
+                    </ThemedText>
+                    <Ionicons
+                      name={showDemo ? 'chevron-up' : 'chevron-down'}
+                      size={16}
+                      color={theme.tint}
+                    />
+                  </Pressable>
+
+                  {showDemo ? (
+                    <View
+                      style={[
+                        styles.demoList,
+                        { backgroundColor: theme.background, borderColor: theme.border },
+                      ]}>
+                      {demoAccounts.map((acct, i) => (
+                        <Pressable
+                          key={acct.email}
+                          onPress={() => fillDemo(acct.email)}
+                          style={({ pressed }) => [
+                            styles.demoItem,
+                            i > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
+                            { opacity: pressed ? 0.6 : 1 },
+                          ]}>
+                          <Avatar name={acct.name} size={32} />
+                          <View style={styles.demoItemText}>
+                            <ThemedText type="small" numberOfLines={1}>
+                              {acct.name}
+                            </ThemedText>
+                            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                              {acct.email}
+                            </ThemedText>
+                          </View>
+                          <Ionicons name="arrow-forward" size={16} color={theme.icon} />
+                        </Pressable>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
+              ) : (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+                  Sign in with a member email · password: {DEMO_PASSWORD}
+                </ThemedText>
+              )}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -192,7 +255,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    gap: Spacing.five,
+    gap: Spacing.four,
   },
   header: {
     alignItems: 'center',
@@ -241,5 +304,28 @@ const styles = StyleSheet.create({
   },
   hint: {
     textAlign: 'center',
+  },
+  demoSection: {
+    gap: Spacing.two,
+  },
+  demoToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  demoList: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Spacing.three,
+    overflow: 'hidden',
+  },
+  demoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.two,
+  },
+  demoItemText: {
+    flex: 1,
+    gap: 1,
   },
 });

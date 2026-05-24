@@ -15,12 +15,22 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export interface LoginUser {
+/** Authenticated user profile (the member who logged in). */
+export interface AuthUser {
+  samajId: string;
   name: string;
   email: string;
+  phone: string;
+  address: string;
+  bloodGroup: string;
 }
 
 export interface LoginResponse {
   token: string;
-  user: LoginUser;
+  user: AuthUser;
+}
+
+export interface DemoAccount {
+  name: string;
+  email: string;
 }

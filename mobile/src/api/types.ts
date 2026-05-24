@@ -42,11 +42,20 @@ export type Facility = {
 };
 
 export type AuthUser = {
+  samajId: string;
   name: string;
   email: string;
+  phone: string;
+  address: string;
+  bloodGroup: string;
 };
 
 export type LoginResponse = {
   token: string;
   user: AuthUser;
+};
+
+export type DemoAccount = {
+  name: string;
+  email: string;
 };

@@ -1,12 +1,12 @@
 import type { Collection } from "mongodb";
 
 import { getDb } from "../../infrastructure/database/mongo.js";
-import type { Member } from "./member.schema.js";
+import type { Member, MemberDoc } from "./member.schema.js";
 
 const COLLECTION = "members";
 
-/** Fields returned to clients (drops Mongo's internal _id). */
-const PROJECTION = {
+/** Public fields only — drops Mongo's _id and the passwordHash. */
+const PUBLIC_PROJECTION = {
   _id: 0,
   samajId: 1,
   name: 1,
@@ -16,17 +16,22 @@ const PROJECTION = {
   bloodGroup: 1,
 } as const;
 
-export function membersCollection(): Collection<Member> {
-  return getDb().collection<Member>(COLLECTION);
+export function membersCollection(): Collection<MemberDoc> {
+  return getDb().collection<MemberDoc>(COLLECTION);
 }
 
 export function findAllMembers(): Promise<Member[]> {
   return membersCollection()
-    .find({}, { projection: PROJECTION })
+    .find({}, { projection: PUBLIC_PROJECTION })
     .sort({ samajId: 1 })
     .toArray();
 }
 
 export function findMemberById(samajId: string): Promise<Member | null> {
-  return membersCollection().findOne({ samajId }, { projection: PROJECTION });
+  return membersCollection().findOne({ samajId }, { projection: PUBLIC_PROJECTION });
+}
+
+/** Includes the passwordHash — used only for authentication. */
+export function findMemberByEmail(email: string): Promise<MemberDoc | null> {
+  return membersCollection().findOne({ email }, { projection: { _id: 0 } });
 }

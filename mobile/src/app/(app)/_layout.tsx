@@ -22,6 +22,7 @@ export default function AppLayout() {
       <Drawer.Screen name="about" options={{ title: 'About Us' }} />
       <Drawer.Screen name="facilities" options={{ title: 'Facilities' }} />
       <Drawer.Screen name="contact" options={{ title: 'Contact Us' }} />
+      <Drawer.Screen name="profile" options={{ title: 'Profile' }} />
     </Drawer>
   );
 }
