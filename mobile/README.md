@@ -10,7 +10,15 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Create your local env file
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set `EXPO_PUBLIC_API_URL` to the backend URL you want the app to call.
+
+3. Start the app
 
    ```bash
    npx expo start
@@ -24,6 +32,24 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Android
+
+For an Android cloud build using Expo, run:
+
+```bash
+npm run android
+```
+
+That uploads the app to EAS Build and returns a hosted Android artifact.
+
+If you only want the Metro dev server to open Android locally, use:
+
+```bash
+npm run android:dev
+```
+
+Your `.env` file is already set up and will be used by the app at build/runtime.
 
 ## Get a fresh project
 
