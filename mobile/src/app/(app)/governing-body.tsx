@@ -5,12 +5,15 @@ import { StyleSheet, View } from 'react-native';
 import { api } from '@/api/client';
 import { ErrorView } from '@/components/error-view';
 import { Loading } from '@/components/loading';
+import { LottieAnim } from '@/components/lottie-anim';
 import { PersonCard } from '@/components/person-card';
 import { ScreenScroll } from '@/components/screen-scroll';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useAsyncData } from '@/hooks/use-async-data';
+
+const INTRO = require('@/assets/lottie/governing-body.json');
 
 export default function GoverningBodyScreen() {
   const router = useRouter();
@@ -24,6 +27,7 @@ export default function GoverningBodyScreen() {
 
   return (
     <ScreenScroll onRefresh={refetch} refreshing={refreshing}>
+      <LottieAnim source={INTRO} ratio={0.5} minSize={140} maxSize={220} />
       {data.map((group) => (
         <View key={group.group} style={styles.group}>
           <ThemedText type="smallBold" style={styles.groupTitle}>

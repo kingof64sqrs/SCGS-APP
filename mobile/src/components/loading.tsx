@@ -1,14 +1,15 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { LottieAnim } from './lottie-anim';
 import { ThemedText } from './themed-text';
 
+const LOADING = require('@/assets/lottie/loading.json');
+
 export function Loading({ label }: { label?: string }) {
-  const theme = useTheme();
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={theme.tint} />
+      <LottieAnim source={LOADING} ratio={0.55} minSize={140} maxSize={220} />
       {label ? (
         <ThemedText themeColor="textSecondary" style={styles.label}>
           {label}
@@ -23,10 +24,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.three,
+    gap: Spacing.two,
     padding: Spacing.four,
   },
-  label: {
-    textAlign: 'center',
-  },
+  label: { textAlign: 'center' },
 });

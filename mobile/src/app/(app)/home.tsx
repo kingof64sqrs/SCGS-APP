@@ -8,6 +8,7 @@ import { api } from '@/api/client';
 import { Card } from '@/components/card';
 import { ErrorView } from '@/components/error-view';
 import { Loading } from '@/components/loading';
+import { LottieAnim } from '@/components/lottie-anim';
 import { ScreenScroll } from '@/components/screen-scroll';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -16,6 +17,7 @@ import { useAsyncData } from '@/hooks/use-async-data';
 import { useTheme } from '@/hooks/use-theme';
 
 const LOGO = require('@/assets/images/scgs-logo.png');
+const HERO = require('@/assets/lottie/home-hero.json');
 
 type QuickLink = {
   href: '/members' | '/governing-body' | '/about' | '/facilities' | '/contact';
@@ -55,6 +57,9 @@ export default function HomeScreen() {
 
   return (
     <ScreenScroll onRefresh={refetch}>
+      {/* Hero animation */}
+      <LottieAnim source={HERO} ratio={0.55} minSize={160} maxSize={240} />
+
       {/* Hero */}
       <Card style={styles.hero}>
         <Image source={LOGO} style={styles.logo} contentFit="contain" />

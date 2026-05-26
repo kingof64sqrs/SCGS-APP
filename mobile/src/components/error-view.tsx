@@ -3,13 +3,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { LottieAnim } from './lottie-anim';
 import { ThemedText } from './themed-text';
+
+const ERROR = require('@/assets/lottie/error.json');
 
 export function ErrorView({ message, onRetry }: { message: string; onRetry?: () => void }) {
   const theme = useTheme();
   return (
     <View style={styles.container}>
-      <Ionicons name="cloud-offline-outline" size={48} color={theme.textSecondary} />
+      <LottieAnim source={ERROR} ratio={0.55} minSize={150} maxSize={240} />
       <ThemedText type="smallBold" style={styles.message}>
         {message}
       </ThemedText>
@@ -33,12 +36,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.three,
+    gap: Spacing.two,
     padding: Spacing.four,
   },
-  message: {
-    textAlign: 'center',
-  },
+  message: { textAlign: 'center' },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -48,8 +49,5 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     marginTop: Spacing.two,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+  buttonText: { color: '#fff', fontWeight: '600' },
 });

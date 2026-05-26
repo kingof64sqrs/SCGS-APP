@@ -7,6 +7,7 @@ import { api } from '@/api/client';
 import type { Member } from '@/api/types';
 import { ErrorView } from '@/components/error-view';
 import { Loading } from '@/components/loading';
+import { LottieAnim } from '@/components/lottie-anim';
 import { MemberPhoto } from '@/components/member-photo';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,6 +15,8 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useAsyncData } from '@/hooks/use-async-data';
 import { useTheme } from '@/hooks/use-theme';
+
+const EMPTY = require('@/assets/lottie/empty-search.json');
 
 function MemberRow({ member, onPress }: { member: Member; onPress: () => void }) {
   const theme = useTheme();
@@ -108,9 +111,15 @@ export default function MembersScreen() {
           </View>
         }
         ListEmptyComponent={
-          <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-            No members match “{query}”.
-          </ThemedText>
+          <View style={styles.emptyWrap}>
+            <LottieAnim source={EMPTY} ratio={0.6} minSize={160} maxSize={240} />
+            <ThemedText type="smallBold" style={styles.empty}>
+              No matches
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+              No members match “{query}”.
+            </ThemedText>
+          </View>
         }
       />
     </ThemedView>
@@ -144,7 +153,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   count: { marginLeft: Spacing.one },
-  empty: { textAlign: 'center', marginTop: Spacing.five },
+  empty: { textAlign: 'center' },
+  emptyWrap: { alignItems: 'center', gap: Spacing.one, marginTop: Spacing.four },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

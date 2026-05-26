@@ -15,5 +15,5 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...config.extra,
       scgsApiUrl: apiUrl,
     },
-  };
+  } as ExpoConfig;
 };
