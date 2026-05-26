@@ -6,7 +6,8 @@ import { close } from "../database/mongo.js";
 
 /** Start the HTTP server and wire up graceful shutdown. */
 export function startServer(app: Express): Server {
-  const server = app.listen(env.port, () => {
+  // Explicitly bind to 0.0.0.0 so the service is reachable from other hosts
+  const server = app.listen(env.port, "0.0.0.0", () => {
     console.log(`SCGS backend listening on http://0.0.0.0:${env.port}`);
   });
 
