@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 /**
@@ -12,6 +13,11 @@ import { Platform } from 'react-native';
  *  - iOS simulator / web: localhost
  */
 function resolveBaseUrl(): string {
+  const fromConfig = Constants.expoConfig?.extra?.scgsApiUrl;
+  if (typeof fromConfig === 'string' && fromConfig.trim()) {
+    return fromConfig.replace(/\/$/, '');
+  }
+
   const fromEnv = process.env.EXPO_PUBLIC_API_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
   if (Platform.OS === 'android') return 'http://10.0.2.2:4000';
