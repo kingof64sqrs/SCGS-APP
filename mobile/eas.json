@@ -6,14 +6,26 @@
     "development": {
       "distribution": "internal",
       "developmentClient": true,
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://three-superior-arc-chief.trycloudflare.com"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://three-superior-arc-chief.trycloudflare.com"
+      }
     },
     "production": {
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://three-superior-arc-chief.trycloudflare.com"
+      }
     }
   },
   "submit": {

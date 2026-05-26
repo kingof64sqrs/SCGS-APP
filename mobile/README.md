@@ -16,7 +16,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    cp .env.example .env
    ```
 
-   Set `EXPO_PUBLIC_API_URL` to the backend URL you want the app to call.
+   Set `EXPO_PUBLIC_API_URL` to the Cloudflare backend URL if you need to override the default.
 
 3. Start the app
 
@@ -35,13 +35,25 @@ You can start developing by editing the files inside the **app** directory. This
 
 ## Android
 
-For an Android cloud build using Expo, run:
+For an Android APK build using Expo, run:
 
 ```bash
 npm run android
 ```
 
-That uploads the app to EAS Build and returns a hosted Android artifact.
+That uploads the app to EAS Build and returns a hosted APK artifact.
+
+The default backend URL for the app is:
+
+```text
+https://three-superior-arc-chief.trycloudflare.com
+```
+
+If you want the production AAB instead, run:
+
+```bash
+npm run build:aab
+```
 
 If you only want the Metro dev server to open Android locally, use:
 

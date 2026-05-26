@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+
+const DEFAULT_API_URL = 'https://three-superior-arc-chief.trycloudflare.com';
 
 /**
  * Base URL of the SCGS backend API.
@@ -20,8 +21,7 @@ function resolveBaseUrl(): string {
 
   const fromEnv = process.env.EXPO_PUBLIC_API_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
-  if (Platform.OS === 'android') return 'http://10.0.2.2:4000';
-  return 'http://localhost:4000';
+  return DEFAULT_API_URL;
 }
 
 export const API_BASE_URL = resolveBaseUrl();

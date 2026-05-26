@@ -47,6 +47,12 @@
         "projectId": "d91f0f22-fc1d-436b-8520-f5fe1c00df7c"
       }
     },
-    "owner": "kingof64sqrs"
+    "owner": "kingof64sqrs",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d91f0f22-fc1d-436b-8520-f5fe1c00df7c"
+    }
   }
 }
