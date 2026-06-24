@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { ZodError } from "zod";
 
 import { HttpError } from "../errors/http-error.js";
 
@@ -16,6 +17,12 @@ export function errorHandler(
       error: err.message,
       ...(err.details ? { details: err.details } : {}),
     });
+    return;
+  }
+
+  if (err instanceof ZodError) {
+    const message = err.issues[0]?.message ?? "Invalid request";
+    res.status(400).json({ error: message, details: err.flatten() });
     return;
   }
 

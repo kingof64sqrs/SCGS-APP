@@ -5,8 +5,21 @@ import {
   PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Avatar, Button, Form, Input, Modal, Popconfirm, Space, Table, Tag, Typography, message } from 'antd';
-import { useEffect, useState } from 'react';
+import {
+  Avatar,
+  Button,
+  Form,
+  Input,
+  Modal,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  message,
+  type TableProps,
+} from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api } from '../api';
 import { PhotoUpload } from '../PhotoUpload';
@@ -20,34 +33,77 @@ type Member = {
   bloodGroup: string;
 };
 
+type PagedMembers = {
+  items: Member[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+const SEARCH_DEBOUNCE_MS = 300;
+
 export default function MembersPage() {
-  const [data, setData] = useState<Member[]>([]);
+  const [rows, setRows] = useState<Member[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
+
+  const [searchInput, setSearchInput] = useState('');
+  const [activeQuery, setActiveQuery] = useState('');
+
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Member | null>(null);
   const [pwFor, setPwFor] = useState<Member | null>(null);
   const [form] = Form.useForm();
   const [pwForm] = Form.useForm();
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      setData(await api<Member[]>('/admin/members'));
-    } catch (e) {
-      message.error((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const controllerRef = useRef<AbortController | null>(null);
+
+  const fetchPage = useCallback(
+    async (nextPage: number, size: number, q: string) => {
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ page: String(nextPage), limit: String(size) });
+        if (q) params.set('q', q);
+        const res = await api<PagedMembers>(`/admin/members?${params.toString()}`);
+        if (controller.signal.aborted) return;
+        setRows(res.items);
+        setTotal(res.total);
+        setPage(res.page);
+      } catch (e) {
+        if (controller.signal.aborted) return;
+        message.error((e as Error).message);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Debounce typing → activeQuery; activeQuery → fetch page 1.
   useEffect(() => {
-    void load();
-  }, []);
+    const t = setTimeout(() => setActiveQuery(searchInput.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
+    void fetchPage(1, pageSize, activeQuery);
+    return () => controllerRef.current?.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeQuery, pageSize]);
+
+  const reload = () => fetchPage(page, pageSize, activeQuery);
 
   const openCreate = () => {
     setEditing(null);
     setCreating(true);
     form.resetFields();
-    form.setFieldsValue({ bloodGroup: 'O+', password: 'test123' });
+    form.setFieldsValue({ bloodGroup: 'O+' });
   };
   const openEdit = (m: Member) => {
     setCreating(false);
@@ -64,14 +120,19 @@ export default function MembersPage() {
     try {
       if (creating) {
         await api('/admin/members', { method: 'POST', body: v });
-        message.success('Member added');
+        message.success('Member added — default password is their phone number');
+        // Jump to last page so the new row is visible.
+        await fetchPage(1, pageSize, activeQuery);
       } else if (editing) {
         const { password: _pw, ...rest } = v;
-        await api(`/admin/members/${editing.samajId}`, { method: 'PUT', body: rest });
+        await api(`/admin/members/${encodeURIComponent(editing.samajId)}`, {
+          method: 'PUT',
+          body: rest,
+        });
         message.success('Saved');
+        await reload();
       }
       close();
-      void load();
     } catch (e) {
       message.error((e as Error).message);
     }
@@ -79,9 +140,11 @@ export default function MembersPage() {
 
   const del = async (m: Member) => {
     try {
-      await api(`/admin/members/${m.samajId}`, { method: 'DELETE' });
+      await api(`/admin/members/${encodeURIComponent(m.samajId)}`, { method: 'DELETE' });
       message.success('Deleted');
-      void load();
+      // If we just removed the last row on this page, step back one.
+      const nextPage = rows.length === 1 && page > 1 ? page - 1 : page;
+      await fetchPage(nextPage, pageSize, activeQuery);
     } catch (e) {
       message.error((e as Error).message);
     }
@@ -90,8 +153,11 @@ export default function MembersPage() {
   const savePw = async () => {
     const v = await pwForm.validateFields();
     try {
-      await api(`/admin/members/${pwFor!.samajId}/password`, { method: 'PUT', body: v });
-      message.success('Password updated');
+      await api(`/admin/members/${encodeURIComponent(pwFor!.samajId)}/password`, {
+        method: 'PUT',
+        body: v,
+      });
+      message.success('Password updated — member must change it at next login');
       setPwFor(null);
       pwForm.resetFields();
     } catch (e) {
@@ -99,67 +165,108 @@ export default function MembersPage() {
     }
   };
 
-  const columns = [
-    {
-      title: '',
-      key: 'photo',
-      width: 56,
-      render: (_: unknown, m: Member) => (
-        <Avatar src={`/api/members/${m.samajId}/photo`} icon={<UserOutlined />} />
-      ),
-    },
-    {
-      title: 'Name',
-      key: 'name',
-      render: (_: unknown, m: Member) => (
-        <div>
-          <strong>{m.name}</strong>
-          <br />
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {m.samajId}
-          </Typography.Text>
-        </div>
-      ),
-    },
-    { title: 'Email', dataIndex: 'email' },
-    { title: 'Phone', dataIndex: 'phone' },
-    {
-      title: 'Blood',
-      dataIndex: 'bloodGroup',
-      width: 80,
-      render: (b: string) => <Tag color="red">{b}</Tag>,
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_: unknown, m: Member) => (
-        <Space wrap>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(m)}>
-            Edit
-          </Button>
-          <Button size="small" icon={<KeyOutlined />} onClick={() => setPwFor(m)}>
-            Password
-          </Button>
-          <Popconfirm title={`Delete ${m.name}?`} onConfirm={() => del(m)} okText="Delete" okButtonProps={{ danger: true }}>
-            <Button size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  const columns = useMemo(
+    () => [
+      {
+        title: '',
+        key: 'photo',
+        width: 56,
+        render: (_: unknown, m: Member) => (
+          <Avatar src={`/api/members/${encodeURIComponent(m.samajId)}/photo`} icon={<UserOutlined />} />
+        ),
+      },
+      {
+        title: 'Name',
+        key: 'name',
+        render: (_: unknown, m: Member) => (
+          <div>
+            <strong>{m.name}</strong>
+            <br />
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {m.samajId}
+            </Typography.Text>
+          </div>
+        ),
+      },
+      { title: 'Email', dataIndex: 'email' },
+      { title: 'Phone', dataIndex: 'phone' },
+      {
+        title: 'Blood',
+        dataIndex: 'bloodGroup',
+        width: 80,
+        render: (b: string) => (b ? <Tag color="red">{b}</Tag> : null),
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        render: (_: unknown, m: Member) => (
+          <Space wrap>
+            <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(m)}>
+              Edit
+            </Button>
+            <Button size="small" icon={<KeyOutlined />} onClick={() => setPwFor(m)}>
+              Password
+            </Button>
+            <Popconfirm
+              title={`Delete ${m.name}?`}
+              onConfirm={() => del(m)}
+              okText="Delete"
+              okButtonProps={{ danger: true }}>
+              <Button size="small" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Space>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, page, pageSize, activeQuery],
+  );
+
+  const onTableChange: TableProps<Member>['onChange'] = (pagination) => {
+    const next = pagination.current ?? 1;
+    const size = pagination.pageSize ?? pageSize;
+    if (size !== pageSize) {
+      setPageSize(size); // effect will refetch
+    } else if (next !== page) {
+      void fetchPage(next, size, activeQuery);
+    }
+  };
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-        <Typography.Title level={4} style={{ flex: 1, margin: 0 }}>
-          Members ({data.length})
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <Typography.Title level={4} style={{ flex: '0 0 auto', margin: 0 }}>
+          Members ({total.toLocaleString()})
         </Typography.Title>
+        <Input.Search
+          allowClear
+          placeholder="Search by name, samajId, phone, email…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onSearch={(v) => setActiveQuery(v.trim())}
+          style={{ flex: '1 1 240px', maxWidth: 420 }}
+        />
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Add member
         </Button>
       </div>
 
-      <Table rowKey="samajId" loading={loading} dataSource={data} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: 700 }} />
+      <Table<Member>
+        rowKey="samajId"
+        loading={loading}
+        dataSource={rows}
+        columns={columns}
+        pagination={{
+          current: page,
+          pageSize,
+          total,
+          showSizeChanger: true,
+          pageSizeOptions: [20, 50, 100, 200],
+          showTotal: (t, range) => `${range[0]}–${range[1]} of ${t.toLocaleString()}`,
+        }}
+        onChange={onTableChange}
+        scroll={{ x: 720 }}
+      />
 
       <Modal
         open={creating || !!editing}
@@ -167,22 +274,24 @@ export default function MembersPage() {
         onOk={save}
         onCancel={close}
         okText="Save"
-        destroyOnClose
-      >
+        destroyOnClose>
         <Form form={form} layout="vertical" requiredMark={false}>
           <Form.Item name="name" label="Name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="email" label="Email (login)" rules={[{ required: true, type: 'email' }]}>
+          <Form.Item
+            name="email"
+            label="Email (optional)"
+            rules={[{ type: 'email', message: 'Enter a valid email or leave blank' }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="phone" label="Phone" rules={[{ required: true }]}>
+          <Form.Item name="phone" label="Phone (login)" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="bloodGroup" label="Blood group" rules={[{ required: true }]}>
+          <Form.Item name="bloodGroup" label="Blood group">
             <Input />
           </Form.Item>
-          <Form.Item name="address" label="Address" rules={[{ required: true }]}>
+          <Form.Item name="address" label="Address">
             <Input.TextArea rows={2} />
           </Form.Item>
           {editing && (
@@ -191,7 +300,10 @@ export default function MembersPage() {
             </Form.Item>
           )}
           {creating && (
-            <Form.Item name="password" label="Password" rules={[{ required: true }]}>
+            <Form.Item
+              name="password"
+              label="Initial password (optional)"
+              extra="Leave blank to use the phone number. Member is asked to change it on first sign-in.">
               <Input />
             </Form.Item>
           )}
@@ -207,8 +319,7 @@ export default function MembersPage() {
           pwForm.resetFields();
         }}
         okText="Update password"
-        destroyOnClose
-      >
+        destroyOnClose>
         <Form form={pwForm} layout="vertical" requiredMark={false}>
           <Form.Item name="password" label="New password" rules={[{ required: true }]}>
             <Input />

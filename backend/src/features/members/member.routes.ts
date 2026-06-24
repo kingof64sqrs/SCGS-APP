@@ -1,15 +1,24 @@
 import { Router } from "express";
+import { z } from "zod";
 
 import { asyncHandler } from "../../core/middleware/async-handler.js";
-import { getMember, getMemberPhoto, listMembers } from "./member.service.js";
+import { getMember, getMemberPhoto, listMembersPaged } from "./member.service.js";
 
 export const membersRouter = Router();
 
-/** GET /api/members -> Member[] (sorted by samajId) */
+/** Query parameters for listing members. */
+const listQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  q: z.string().trim().optional(),
+});
+
+/** GET /api/members?page=&limit=&q= -> { items, page, limit, total, totalPages } */
 membersRouter.get(
   "/",
-  asyncHandler(async (_req, res) => {
-    res.json(await listMembers());
+  asyncHandler(async (req, res) => {
+    const { page, limit, q } = listQuerySchema.parse(req.query);
+    res.json(await listMembersPaged({ page, limit, q }));
   }),
 );
 

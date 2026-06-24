@@ -7,6 +7,7 @@ import type {
   GoverningBodyGroup,
   LoginResponse,
   Member,
+  PagedMembers,
 } from './types';
 
 type ProfilePatch = Partial<Pick<AuthUser, 'name' | 'phone' | 'address' | 'bloodGroup'>>;
@@ -89,11 +90,20 @@ export const api = {
     signal?: AbortSignal,
   ) => request<{ ok: boolean }>('/api/me/photo', { method: 'PUT', body: photo, token, signal }),
 
-  getMembers: (token?: string | null, signal?: AbortSignal) =>
-    request<Member[]>('/api/members', { token, signal }),
+  getMembersPage: (
+    opts: { page: number; limit: number; q?: string },
+    token?: string | null,
+    signal?: AbortSignal,
+  ) => {
+    const params = new URLSearchParams();
+    params.set('page', String(opts.page));
+    params.set('limit', String(opts.limit));
+    if (opts.q && opts.q.trim()) params.set('q', opts.q.trim());
+    return request<PagedMembers>(`/api/members?${params.toString()}`, { token, signal });
+  },
 
   getMember: (samajId: string, token?: string | null, signal?: AbortSignal) =>
-    request<Member>(`/api/members/${samajId}`, { token, signal }),
+    request<Member>(`/api/members/${encodeURIComponent(samajId)}`, { token, signal }),
 
   getGoverningBody: (token?: string | null, signal?: AbortSignal) =>
     request<GoverningBodyGroup[]>('/api/governing-body', { token, signal }),

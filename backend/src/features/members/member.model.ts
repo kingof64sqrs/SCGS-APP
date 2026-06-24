@@ -34,6 +34,39 @@ export function findAllMembers(): Promise<Member[]> {
     .toArray();
 }
 
+/** Escape a string so it can be used inside a RegExp literal. */
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Paginated lookup with optional case-insensitive search across name, samajId,
+ * phone and email. Limits are clamped by the route layer.
+ */
+export async function findMembersPage(opts: {
+  page: number;
+  limit: number;
+  q?: string;
+}): Promise<{ items: Member[]; total: number }> {
+  const filter: Filter<MemberDoc> = {};
+  const q = opts.q?.trim();
+  if (q) {
+    const rx = new RegExp(escapeRegex(q), "i");
+    filter.$or = [{ name: rx }, { samajId: rx }, { phone: rx }, { email: rx }];
+  }
+  const skip = Math.max(0, (opts.page - 1) * opts.limit);
+  const [items, total] = await Promise.all([
+    membersCollection()
+      .find(filter, { projection: PUBLIC_PROJECTION })
+      .sort({ samajId: 1 })
+      .skip(skip)
+      .limit(opts.limit)
+      .toArray(),
+    membersCollection().countDocuments(filter),
+  ]);
+  return { items, total };
+}
+
 export function findMemberById(samajId: string): Promise<Member | null> {
   return membersCollection().findOne({ samajId }, { projection: PUBLIC_PROJECTION });
 }

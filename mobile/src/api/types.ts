@@ -41,6 +41,14 @@ export type Facility = {
   description: string;
 };
 
+export type PagedMembers = {
+  items: Member[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
 export type AuthUser = {
   samajId: string;
   name: string;

@@ -24,7 +24,8 @@ import {
 import {
   deleteMember,
   emailExists,
-  findAllMembers,
+  findMemberById,
+  findMembersPage,
   insertMember,
   nextSamajId,
   normalizePhone,
@@ -58,10 +59,24 @@ const memberUpdateSchema = memberCreateSchema.partial();
 const passwordSchema = z.object({ password: z.string().min(1) });
 const photoSchema = z.object({ contentType: z.string().min(1), base64: z.string().min(1) });
 
+const memberListQuery = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  q: z.string().trim().optional(),
+});
+
 adminRouter.get(
   "/members",
-  asyncHandler(async (_req, res) => {
-    res.json(await findAllMembers());
+  asyncHandler(async (req, res) => {
+    const { page, limit, q } = memberListQuery.parse(req.query);
+    const { items, total } = await findMembersPage({ page, limit, q });
+    res.json({
+      items,
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    });
   }),
 );
 
@@ -154,11 +169,18 @@ adminRouter.put(
 
 // ------------------------- Governing Body --------------------------
 
+// Governing body entries are derived from existing members — the admin picks a
+// samajId and the server stores the linked member's name on the GB doc.
 const gbCreateSchema = z.object({
-  name: z.string().trim().min(1),
+  samajId: z.string().trim().min(1, "Pick a member"),
   position: z.string().trim().min(1),
-  photoUrl: z.string().trim().default(""),
   group: z.string().trim().min(1),
+});
+
+const gbUpdateSchema = z.object({
+  samajId: z.string().trim().min(1).optional(),
+  position: z.string().trim().min(1).optional(),
+  group: z.string().trim().min(1).optional(),
 });
 
 adminRouter.get(
@@ -172,16 +194,33 @@ adminRouter.post(
   "/governing-body",
   validateBody(gbCreateSchema),
   asyncHandler(async (req, res) => {
-    await createGoverningBody(req.body);
+    const { samajId, position, group } = req.body as z.infer<typeof gbCreateSchema>;
+    const member = await findMemberById(samajId);
+    if (!member) throw new BadRequestError("Selected member does not exist");
+    await createGoverningBody({
+      name: member.name,
+      position,
+      group,
+      photoUrl: "",
+      samajId,
+    });
     res.status(201).json({ ok: true });
   }),
 );
 
 adminRouter.put(
   "/governing-body/:id",
-  validateBody(gbCreateSchema.partial()),
+  validateBody(gbUpdateSchema),
   asyncHandler(async (req, res) => {
-    const ok = await updateGoverningBody(req.params.id, req.body);
+    const patch = req.body as z.infer<typeof gbUpdateSchema>;
+    // If the admin switched to a different member, refresh the stored name.
+    const finalPatch: Record<string, unknown> = { ...patch };
+    if (patch.samajId) {
+      const member = await findMemberById(patch.samajId);
+      if (!member) throw new BadRequestError("Selected member does not exist");
+      finalPatch.name = member.name;
+    }
+    const ok = await updateGoverningBody(req.params.id, finalPatch);
     if (!ok) throw new NotFoundError("Governing body member not found");
     res.json({ ok: true });
   }),
