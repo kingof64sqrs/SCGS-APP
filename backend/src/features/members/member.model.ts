@@ -81,6 +81,11 @@ export function findMemberByPhone(phone: string): Promise<MemberDoc | null> {
   return membersCollection().findOne({ phone }, { projection: { _id: 0, photo: 0 } });
 }
 
+/** Same as findMemberById but keeps credentials (passwordHash, mustChangePassword). */
+export function findMemberDocById(samajId: string): Promise<MemberDoc | null> {
+  return membersCollection().findOne({ samajId }, { projection: { _id: 0, photo: 0 } });
+}
+
 /** Just the stored photo for a member (or null if none). */
 export async function findMemberPhoto(samajId: string): Promise<MemberPhoto | null> {
   const doc = await membersCollection().findOne({ samajId }, { projection: { _id: 0, photo: 1 } });

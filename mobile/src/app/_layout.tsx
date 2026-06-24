@@ -37,8 +37,9 @@ function RootNavigator() {
       return;
     }
 
-    if (onLogin || onChangePassword) {
-      // Signed in & password set → into the app.
+    // Signed in & password set → kick away from the login screen. We allow
+    // voluntary visits to /change-password (it has its own Cancel/back action).
+    if (onLogin) {
       router.replace('/home');
     }
   }, [token, user, isReady, root, router]);

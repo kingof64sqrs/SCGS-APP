@@ -124,6 +124,30 @@ export default function ProfileScreen() {
         </View>
       </Card>
 
+      {/* Security */}
+      <ThemedText type="smallBold" style={styles.sectionTitle}>
+        Security
+      </ThemedText>
+      <Card style={styles.detailsCard}>
+        <Pressable
+          onPress={() => router.push('/change-password')}
+          style={({ pressed }) => [
+            styles.detailRow,
+            { opacity: pressed ? 0.6 : 1 },
+          ]}>
+          <View style={[styles.detailIcon, { backgroundColor: theme.backgroundSelected }]}>
+            <Ionicons name="key-outline" size={18} color={theme.tint} />
+          </View>
+          <View style={styles.detailText}>
+            <ThemedText type="small">Change Password</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Update the password you use to sign in.
+            </ThemedText>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={theme.icon} />
+        </Pressable>
+      </Card>
+
       {/* Logout */}
       <Pressable
         onPress={signOut}

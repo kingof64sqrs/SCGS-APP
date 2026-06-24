@@ -1,7 +1,8 @@
-import { NotFoundError } from "../../core/errors/http-error.js";
-import { hashPassword } from "../../core/security/password.js";
+import { BadRequestError, NotFoundError, UnauthorizedError } from "../../core/errors/http-error.js";
+import { hashPassword, verifyPassword } from "../../core/security/password.js";
 import {
   findMemberById,
+  findMemberDocById,
   setMemberPassword,
   updateMember,
   updateMemberPhoto,
@@ -26,11 +27,27 @@ export async function updateMyPhoto(samajId: string, photo: UpdatePhotoInput): P
   if (!ok) throw new NotFoundError("Member not found");
 }
 
-/** Self-service password change — clears mustChangePassword. */
+/**
+ * Self-service password change.
+ * - Forced flow (mustChangePassword=true): no current-password check.
+ * - Voluntary flow (mustChangePassword=false): currentPassword must match.
+ * Either way, the flag is cleared on success.
+ */
 export async function changeMyPassword(
   samajId: string,
   input: ChangePasswordInput,
 ): Promise<void> {
-  const ok = await setMemberPassword(samajId, hashPassword(input.password), false);
-  if (!ok) throw new NotFoundError("Member not found");
+  const doc = await findMemberDocById(samajId);
+  if (!doc) throw new NotFoundError("Member not found");
+
+  if (!doc.mustChangePassword) {
+    if (!input.currentPassword) {
+      throw new BadRequestError("Current password is required");
+    }
+    if (!verifyPassword(input.currentPassword, doc.passwordHash)) {
+      throw new UnauthorizedError("Current password is incorrect");
+    }
+  }
+
+  await setMemberPassword(samajId, hashPassword(input.password), false);
 }

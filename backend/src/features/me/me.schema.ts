@@ -20,8 +20,13 @@ export const updatePhotoSchema = z.object({
 
 export type UpdatePhotoInput = z.infer<typeof updatePhotoSchema>;
 
-/** First-time / self-initiated password change. */
+/**
+ * First-time or self-initiated password change.
+ * - `currentPassword` is required for voluntary changes (when mustChangePassword=false).
+ * - It is ignored on the forced first-login flow (when the user's mustChangePassword=true).
+ */
 export const changePasswordSchema = z.object({
+  currentPassword: z.string().optional(),
   password: z.string().min(6, "Use at least 6 characters"),
 });
 

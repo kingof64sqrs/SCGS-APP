@@ -11,6 +11,14 @@ import {
 
 import { api } from '@/api/client';
 import type { AuthUser } from '@/api/types';
+import {
+  biometricAvailable,
+  clearBiometric,
+  isBiometricEnabled,
+  storeBiometricSession,
+  unlockBiometricSession,
+  type BiometricKind,
+} from '@/utils/biometric';
 
 type AuthContextValue = {
   token: string | null;
@@ -18,11 +26,22 @@ type AuthContextValue = {
   isReady: boolean;
   /** Bumped when the current user's photo changes, to bust image caches. */
   photoBust: number;
+  /** Biometric login is set up on this device for the current account. */
+  biometricEnabled: boolean;
+  /** Device hardware/enrolment supports biometric login. */
+  biometricSupported: boolean;
+  /** What kind of biometric the device offers (Face ID, fingerprint…). */
+  biometricKind: BiometricKind;
   signIn: (identifier: string, password: string) => Promise<void>;
+  /** Prompt biometrics, then restore the cached session. Resolves true on success. */
+  signInWithBiometric: () => Promise<boolean>;
   signOut: () => Promise<void>;
   updateUser: (user: AuthUser) => Promise<void>;
-  /** Mark the current user's password as freshly set (clears mustChangePassword). */
   markPasswordChanged: () => Promise<void>;
+  /** Save the current session behind biometrics. */
+  enableBiometric: () => Promise<void>;
+  /** Forget the cached session and bio flag. */
+  disableBiometric: () => Promise<void>;
   bumpPhoto: () => void;
 };
 
@@ -36,16 +55,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [photoBust, setPhotoBust] = useState(0);
 
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricKind, setBiometricKind] = useState<BiometricKind>('biometrics');
+
   // Restore a persisted session on launch.
   useEffect(() => {
     (async () => {
       try {
-        const [storedToken, storedUser] = await Promise.all([
+        const [storedToken, storedUser, bioEnabled, bioInfo] = await Promise.all([
           AsyncStorage.getItem(TOKEN_KEY),
           AsyncStorage.getItem(USER_KEY),
+          isBiometricEnabled(),
+          biometricAvailable(),
         ]);
         if (storedToken) setToken(storedToken);
         if (storedUser) setUser(JSON.parse(storedUser));
+        setBiometricEnabled(bioEnabled);
+        setBiometricSupported(bioInfo.available);
+        setBiometricKind(bioInfo.kind);
       } catch {
         // ignore restore errors — user simply logs in again
       } finally {
@@ -54,20 +82,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const signIn = useCallback(async (identifier: string, password: string) => {
-    const res = await api.login(identifier.trim(), password);
-    setToken(res.token);
-    setUser(res.user);
+  const applySession = useCallback(async (nextToken: string, nextUser: AuthUser) => {
+    setToken(nextToken);
+    setUser(nextUser);
     await Promise.all([
-      AsyncStorage.setItem(TOKEN_KEY, res.token),
-      AsyncStorage.setItem(USER_KEY, JSON.stringify(res.user)),
+      AsyncStorage.setItem(TOKEN_KEY, nextToken),
+      AsyncStorage.setItem(USER_KEY, JSON.stringify(nextUser)),
     ]);
   }, []);
+
+  const signIn = useCallback(
+    async (identifier: string, password: string) => {
+      const res = await api.login(identifier.trim(), password);
+      await applySession(res.token, res.user);
+    },
+    [applySession],
+  );
+
+  const signInWithBiometric = useCallback(async () => {
+    const restored = await unlockBiometricSession('Sign in to SCGS');
+    if (!restored) return false;
+    await applySession(restored.token, restored.user);
+    return true;
+  }, [applySession]);
 
   const signOut = useCallback(async () => {
     setToken(null);
     setUser(null);
-    await Promise.all([AsyncStorage.removeItem(TOKEN_KEY), AsyncStorage.removeItem(USER_KEY)]);
+    setBiometricEnabled(false);
+    await Promise.all([
+      AsyncStorage.removeItem(TOKEN_KEY),
+      AsyncStorage.removeItem(USER_KEY),
+      clearBiometric(),
+    ]);
   }, []);
 
   const updateUser = useCallback(async (next: AuthUser) => {
@@ -84,6 +131,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const enableBiometric = useCallback(async () => {
+    if (!token || !user) throw new Error('Sign in first');
+    await storeBiometricSession(token, user);
+    setBiometricEnabled(true);
+  }, [token, user]);
+
+  const disableBiometric = useCallback(async () => {
+    await clearBiometric();
+    setBiometricEnabled(false);
+  }, []);
+
   const bumpPhoto = useCallback(() => setPhotoBust((n) => n + 1), []);
 
   const value = useMemo(
@@ -92,13 +150,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isReady,
       photoBust,
+      biometricEnabled,
+      biometricSupported,
+      biometricKind,
       signIn,
+      signInWithBiometric,
       signOut,
       updateUser,
       markPasswordChanged,
+      enableBiometric,
+      disableBiometric,
       bumpPhoto,
     }),
-    [token, user, isReady, photoBust, signIn, signOut, updateUser, markPasswordChanged, bumpPhoto],
+    [
+      token,
+      user,
+      isReady,
+      photoBust,
+      biometricEnabled,
+      biometricSupported,
+      biometricKind,
+      signIn,
+      signInWithBiometric,
+      signOut,
+      updateUser,
+      markPasswordChanged,
+      enableBiometric,
+      disableBiometric,
+      bumpPhoto,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

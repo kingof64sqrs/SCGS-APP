@@ -27,6 +27,7 @@ import {
   findMemberById,
   findMembersPage,
   insertMember,
+  membersCollection,
   nextSamajId,
   normalizePhone,
   phoneExists,
@@ -34,6 +35,11 @@ import {
   updateMember,
   updateMemberPhoto,
 } from "../members/member.model.js";
+import {
+  getAdminKeyOverride,
+  setAdminKeyOverride,
+} from "../settings/settings.model.js";
+import { governingBodyCollection } from "../governing-body/governing-body.model.js";
 
 export const adminRouter = Router();
 
@@ -44,6 +50,63 @@ adminRouter.use(requireAdmin);
 adminRouter.get("/verify", (_req, res) => {
   res.json({ ok: true });
 });
+
+// ----------------------------- Stats & Settings -----------------------------
+
+/** GET /api/admin/stats -> high-level counts for the dashboard. */
+adminRouter.get(
+  "/stats",
+  asyncHandler(async (_req, res) => {
+    const [members, governingBody] = await Promise.all([
+      membersCollection().countDocuments(),
+      governingBodyCollection().countDocuments(),
+    ]);
+    const withPhoto = await membersCollection().countDocuments({ photo: { $exists: true } });
+    const pendingPasswordChange = await membersCollection().countDocuments({
+      mustChangePassword: true,
+    });
+    res.json({
+      members,
+      governingBody,
+      membersWithPhoto: withPhoto,
+      pendingPasswordChange,
+    });
+  }),
+);
+
+/** GET /api/admin/settings -> indicates whether a DB admin-key override is set. */
+adminRouter.get(
+  "/settings",
+  asyncHandler(async (_req, res) => {
+    const override = await getAdminKeyOverride();
+    res.json({ adminKeyOverridden: !!override });
+  }),
+);
+
+const changeAdminKeySchema = z
+  .object({
+    newKey: z.string().min(4, "Admin key must be at least 4 characters"),
+    confirmKey: z.string().min(1, "Confirm the new key"),
+  })
+  .refine((v) => v.newKey === v.confirmKey, {
+    message: "Keys do not match",
+    path: ["confirmKey"],
+  });
+
+/**
+ * PUT /api/admin/settings/admin-key
+ * Persists a new admin key in Mongo (overrides ADMIN_KEY env). The current
+ * key has already been verified by `requireAdmin`.
+ */
+adminRouter.put(
+  "/settings/admin-key",
+  validateBody(changeAdminKeySchema),
+  asyncHandler(async (req, res) => {
+    const { newKey } = req.body as z.infer<typeof changeAdminKeySchema>;
+    await setAdminKeyOverride(newKey);
+    res.json({ ok: true });
+  }),
+);
 
 // ----------------------------- Members -----------------------------
 

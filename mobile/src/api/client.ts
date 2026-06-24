@@ -67,10 +67,14 @@ export const api = {
       signal,
     }),
 
-  changePassword: (token: string | null, password: string, signal?: AbortSignal) =>
+  changePassword: (
+    token: string | null,
+    body: { password: string; currentPassword?: string },
+    signal?: AbortSignal,
+  ) =>
     request<{ ok: boolean }>('/api/me/password', {
       method: 'POST',
-      body: { password },
+      body,
       token,
       signal,
     }),

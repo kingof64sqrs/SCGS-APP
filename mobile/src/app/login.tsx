@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -22,19 +23,28 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useAsyncData } from '@/hooks/use-async-data';
 import { useTheme } from '@/hooks/use-theme';
+import { bioLabel } from '@/utils/biometric';
 
 const LOGO = require('@/assets/images/scgs-logo.png');
 const CARD_MAX_WIDTH = 420;
 
 export default function LoginScreen() {
   const theme = useTheme();
-  const { signIn } = useAuth();
+  const {
+    signIn,
+    signInWithBiometric,
+    enableBiometric,
+    biometricEnabled,
+    biometricSupported,
+    biometricKind,
+  } = useAuth();
   const { width } = useWindowDimensions();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [bioBusy, setBioBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { data: demoAccounts } = useAsyncData(useCallback((signal) => api.getDemoAccounts(signal), []));
@@ -59,12 +69,49 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await signIn(identifier, password);
+      // After a successful password login, offer biometric for next time.
+      if (biometricSupported && !biometricEnabled) {
+        const label = bioLabel(biometricKind);
+        Alert.alert(
+          `Enable ${label}?`,
+          `Use your ${label.toLowerCase()} next time to sign in faster.`,
+          [
+            { text: 'Not now', style: 'cancel' },
+            {
+              text: 'Enable',
+              onPress: () => {
+                enableBiometric().catch(() => {});
+              },
+            },
+          ],
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleBiometric = useCallback(async () => {
+    if (bioBusy) return;
+    setBioBusy(true);
+    setError(null);
+    try {
+      const ok = await signInWithBiometric();
+      if (!ok) setError('Biometric sign-in was cancelled or failed.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Biometric sign-in failed.');
+    } finally {
+      setBioBusy(false);
+    }
+  }, [bioBusy, signInWithBiometric]);
+
+  // Auto-prompt biometrics on screen open if the user has enabled them.
+  useEffect(() => {
+    if (biometricEnabled) void handleBiometric();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [biometricEnabled]);
 
   return (
     <ThemedView style={styles.root}>

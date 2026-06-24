@@ -7,6 +7,7 @@ import AboutPage from './pages/AboutPage';
 import FacilitiesPage from './pages/FacilitiesPage';
 import GoverningBodyPage from './pages/GoverningBodyPage';
 import MembersPage from './pages/MembersPage';
+import SettingsPage from './pages/SettingsPage';
 
 function Login({ onOk }: { onOk: () => void }) {
   const [key, setKeyValue] = useState('');
@@ -89,6 +90,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
               { key: 'gb', label: 'Governing Body', children: <GoverningBodyPage /> },
               { key: 'about', label: 'About', children: <AboutPage /> },
               { key: 'facilities', label: 'Facilities', children: <FacilitiesPage /> },
+              { key: 'settings', label: 'Settings', children: <SettingsPage /> },
             ]}
           />
         </div>
