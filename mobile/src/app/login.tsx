@@ -226,6 +226,28 @@ export default function LoginScreen() {
                   )}
                 </Pressable>
 
+                {biometricEnabled ? (
+                  <Pressable
+                    onPress={handleBiometric}
+                    disabled={bioBusy}
+                    style={({ pressed }) => [
+                      styles.bioButton,
+                      {
+                        borderColor: theme.border,
+                        backgroundColor: theme.background,
+                        opacity: pressed || bioBusy ? 0.7 : 1,
+                      },
+                    ]}
+                    accessibilityRole="button">
+                    <Ionicons name="finger-print" size={20} color={theme.tint} />
+                    <ThemedText type="smallBold" style={{ color: theme.tint }}>
+                      {bioBusy
+                        ? 'Authenticating…'
+                        : `Sign in with ${bioLabel(biometricKind)}`}
+                    </ThemedText>
+                  </Pressable>
+                ) : null}
+
                 <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
                   First time? Your password is your phone number — you&apos;ll set a new one after signing in.
                 </ThemedText>
@@ -353,6 +375,15 @@ const styles = StyleSheet.create({
   },
   hint: {
     textAlign: 'center',
+  },
+  bioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    height: 52,
+    borderRadius: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   demoSection: {
     gap: Spacing.two,

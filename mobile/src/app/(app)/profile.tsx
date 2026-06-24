@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { Card } from '@/components/card';
 import { MemberPhoto } from '@/components/member-photo';
@@ -10,6 +10,7 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useThemeMode, type ThemeMode } from '@/context/theme-context';
 import { useTheme } from '@/hooks/use-theme';
+import { bioLabel } from '@/utils/biometric';
 
 const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { mode: 'light', label: 'Light', icon: 'sunny-outline' },
@@ -47,10 +48,27 @@ function DetailRow({
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const {
+    user,
+    signOut,
+    biometricEnabled,
+    biometricSupported,
+    biometricKind,
+    enableBiometric,
+    disableBiometric,
+  } = useAuth();
   const { mode, setMode } = useThemeMode();
 
   if (!user) return null;
+
+  const onToggleBiometric = async (next: boolean) => {
+    try {
+      if (next) await enableBiometric();
+      else await disableBiometric();
+    } catch {
+      // swallow — the toggle just won't move on failure
+    }
+  };
 
   return (
     <ScreenScroll>
@@ -133,7 +151,7 @@ export default function ProfileScreen() {
           onPress={() => router.push('/change-password')}
           style={({ pressed }) => [
             styles.detailRow,
-            { opacity: pressed ? 0.6 : 1 },
+            { borderBottomColor: theme.border, borderBottomWidth: StyleSheet.hairlineWidth, opacity: pressed ? 0.6 : 1 },
           ]}>
           <View style={[styles.detailIcon, { backgroundColor: theme.backgroundSelected }]}>
             <Ionicons name="key-outline" size={18} color={theme.tint} />
@@ -146,6 +164,27 @@ export default function ProfileScreen() {
           </View>
           <Ionicons name="chevron-forward" size={18} color={theme.icon} />
         </Pressable>
+        <View style={styles.detailRow}>
+          <View style={[styles.detailIcon, { backgroundColor: theme.backgroundSelected }]}>
+            <Ionicons name="finger-print" size={18} color={theme.tint} />
+          </View>
+          <View style={styles.detailText}>
+            <ThemedText type="small">{bioLabel(biometricKind)} sign-in</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {biometricSupported
+                ? biometricEnabled
+                  ? 'On — sign in without typing your password.'
+                  : 'Use your biometrics instead of a password.'
+                : 'Not available on this device.'}
+            </ThemedText>
+          </View>
+          <Switch
+            value={biometricEnabled}
+            onValueChange={onToggleBiometric}
+            disabled={!biometricSupported}
+            trackColor={{ false: theme.border, true: theme.tint }}
+          />
+        </View>
       </Card>
 
       {/* Logout */}
