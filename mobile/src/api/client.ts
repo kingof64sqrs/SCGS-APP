@@ -59,8 +59,20 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 export const api = {
-  login: (email: string, password: string, signal?: AbortSignal) =>
-    request<LoginResponse>('/api/auth/login', { method: 'POST', body: { email, password }, signal }),
+  login: (identifier: string, password: string, signal?: AbortSignal) =>
+    request<LoginResponse>('/api/auth/login', {
+      method: 'POST',
+      body: { identifier, password },
+      signal,
+    }),
+
+  changePassword: (token: string | null, password: string, signal?: AbortSignal) =>
+    request<{ ok: boolean }>('/api/me/password', {
+      method: 'POST',
+      body: { password },
+      token,
+      signal,
+    }),
 
   getDemoAccounts: (signal?: AbortSignal) =>
     request<DemoAccount[]>('/api/auth/demo-accounts', { signal }),

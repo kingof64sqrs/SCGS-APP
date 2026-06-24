@@ -3,8 +3,8 @@ import { Router } from "express";
 import { asyncHandler } from "../../core/middleware/async-handler.js";
 import { requireMember } from "../../core/middleware/require-member.js";
 import { validateBody } from "../../core/validation/validate.js";
-import { updatePhotoSchema, updateProfileSchema } from "./me.schema.js";
-import { getMe, updateMe, updateMyPhoto } from "./me.service.js";
+import { changePasswordSchema, updatePhotoSchema, updateProfileSchema } from "./me.schema.js";
+import { changeMyPassword, getMe, updateMe, updateMyPhoto } from "./me.service.js";
 
 export const meRouter = Router();
 
@@ -34,6 +34,16 @@ meRouter.put(
   validateBody(updatePhotoSchema),
   asyncHandler(async (req, res) => {
     await updateMyPhoto(res.locals.samajId as string, req.body);
+    res.json({ ok: true });
+  }),
+);
+
+/** POST /api/me/password -> set own password (clears the must-change flag) */
+meRouter.post(
+  "/password",
+  validateBody(changePasswordSchema),
+  asyncHandler(async (req, res) => {
+    await changeMyPassword(res.locals.samajId as string, req.body);
     res.json({ ok: true });
   }),
 );

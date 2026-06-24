@@ -27,6 +27,8 @@ import {
   findAllMembers,
   insertMember,
   nextSamajId,
+  normalizePhone,
+  phoneExists,
   setMemberPassword,
   updateMember,
   updateMemberPhoto,
@@ -46,10 +48,10 @@ adminRouter.get("/verify", (_req, res) => {
 
 const memberCreateSchema = z.object({
   name: z.string().trim().min(1),
-  email: z.string().trim().email(),
+  email: z.string().trim().email().optional().or(z.literal("")),
   phone: z.string().trim().min(1),
-  address: z.string().trim().min(1),
-  bloodGroup: z.string().trim().min(1),
+  address: z.string().trim().optional().default(""),
+  bloodGroup: z.string().trim().optional().default(""),
   password: z.string().min(1).optional(),
 });
 const memberUpdateSchema = memberCreateSchema.partial();
@@ -68,19 +70,28 @@ adminRouter.post(
   validateBody(memberCreateSchema),
   asyncHandler(async (req, res) => {
     const { password, ...fields } = req.body as z.infer<typeof memberCreateSchema>;
-    const email = fields.email.toLowerCase();
-    if (await emailExists(email)) {
+    const email = (fields.email ?? "").toLowerCase();
+    if (email && (await emailExists(email))) {
       throw new BadRequestError("A member with this email already exists");
     }
+    const phone = normalizePhone(fields.phone);
+    if (!phone) throw new BadRequestError("Phone number must have at least 10 digits");
+    if (await phoneExists(phone)) {
+      throw new BadRequestError("A member with this phone already exists");
+    }
     const samajId = await nextSamajId();
+    // Default password = phone number, with mustChangePassword=true.
+    // If the admin supplied an explicit password, honour it (still must-change).
+    const initialPassword = password ?? phone;
     await insertMember({
       samajId,
       name: fields.name,
       email,
-      phone: fields.phone,
-      address: fields.address,
-      bloodGroup: fields.bloodGroup,
-      passwordHash: hashPassword(password ?? "test123"),
+      phone,
+      address: fields.address ?? "",
+      bloodGroup: fields.bloodGroup ?? "",
+      passwordHash: hashPassword(initialPassword),
+      mustChangePassword: true,
     });
     res.status(201).json({ samajId });
   }),
@@ -96,6 +107,14 @@ adminRouter.put(
       if (await emailExists(patch.email, req.params.samajId)) {
         throw new BadRequestError("Email already in use by another member");
       }
+    }
+    if (patch.phone) {
+      const normalized = normalizePhone(patch.phone);
+      if (!normalized) throw new BadRequestError("Phone number must have at least 10 digits");
+      if (await phoneExists(normalized, req.params.samajId)) {
+        throw new BadRequestError("Phone already in use by another member");
+      }
+      patch.phone = normalized;
     }
     const ok = await updateMember(req.params.samajId, patch);
     if (!ok) throw new NotFoundError("Member not found");
@@ -116,7 +135,8 @@ adminRouter.put(
   "/members/:samajId/password",
   validateBody(passwordSchema),
   asyncHandler(async (req, res) => {
-    const ok = await setMemberPassword(req.params.samajId, hashPassword(req.body.password));
+    // Admin reset → member must change at next login.
+    const ok = await setMemberPassword(req.params.samajId, hashPassword(req.body.password), true);
     if (!ok) throw new NotFoundError("Member not found");
     res.json({ ok: true });
   }),

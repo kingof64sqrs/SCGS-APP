@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-const REQUIRED = "Email and password are required";
+const REQUIRED = "Phone (or email) and password are required";
 
-/** Validation schema for POST /api/auth/login. */
+/** Validation schema for POST /api/auth/login. The identifier may be a phone or email. */
 export const loginSchema = z.object({
-  email: z
+  identifier: z
     .string({ required_error: REQUIRED, invalid_type_error: REQUIRED })
     .trim()
     .min(1, REQUIRED),
@@ -23,6 +23,8 @@ export interface AuthUser {
   phone: string;
   address: string;
   bloodGroup: string;
+  /** Force the client to push the user through a "set new password" flow. */
+  mustChangePassword?: boolean;
 }
 
 export interface LoginResponse {
@@ -32,5 +34,5 @@ export interface LoginResponse {
 
 export interface DemoAccount {
   name: string;
-  email: string;
+  phone: string;
 }

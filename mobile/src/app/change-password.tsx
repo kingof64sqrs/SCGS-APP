@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,52 +15,47 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '@/api/client';
-import { Avatar } from '@/components/avatar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
-import { useAsyncData } from '@/hooks/use-async-data';
 import { useTheme } from '@/hooks/use-theme';
 
 const LOGO = require('@/assets/images/scgs-logo.png');
 const CARD_MAX_WIDTH = 420;
+const MIN_LENGTH = 6;
 
-export default function LoginScreen() {
+export default function ChangePasswordScreen() {
   const theme = useTheme();
-  const { signIn } = useAuth();
+  const { token, user, markPasswordChanged, signOut } = useAuth();
   const { width } = useWindowDimensions();
-  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: demoAccounts } = useAsyncData(useCallback((signal) => api.getDemoAccounts(signal), []));
-
   const isWide = width >= 600;
-  const logoSize = Math.round(Math.min(132, Math.max(96, width * 0.3)));
-
-  const fillDemo = (phone: string) => {
-    setIdentifier(phone);
-    setPassword(phone);
-    setShowDemo(false);
-    setError(null);
-  };
+  const logoSize = Math.round(Math.min(110, Math.max(86, width * 0.26)));
 
   const handleSubmit = async () => {
     if (submitting) return;
-    if (!identifier.trim() || !password) {
-      setError('Please enter your phone number and password.');
+    if (password.length < MIN_LENGTH) {
+      setError(`Use at least ${MIN_LENGTH} characters.`);
+      return;
+    }
+    if (password !== confirm) {
+      setError('The two passwords do not match.');
       return;
     }
     setError(null);
     setSubmitting(true);
     try {
-      await signIn(identifier, password);
+      await api.changePassword(token, password);
+      await markPasswordChanged();
+      // Root navigator will move us into the app group automatically.
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Login failed. Please try again.');
+      setError(e instanceof Error ? e.message : 'Could not change password.');
     } finally {
       setSubmitting(false);
     }
@@ -95,10 +90,12 @@ export default function LoginScreen() {
                   contentFit="contain"
                 />
                 <ThemedText type="subtitle" style={styles.centerText}>
-                  Welcome Back
+                  Set Your Password
                 </ThemedText>
                 <ThemedText themeColor="textSecondary" style={styles.centerText}>
-                  Sign in to Shree Coimbatore Gujarati Samaj
+                  {user
+                    ? `Welcome, ${user.name}. Please choose a new password to continue.`
+                    : 'Please choose a new password to continue.'}
                 </ThemedText>
               </View>
 
@@ -108,30 +105,10 @@ export default function LoginScreen() {
                     styles.inputWrapper,
                     { backgroundColor: theme.background, borderColor: theme.border },
                   ]}>
-                  <Ionicons name="call-outline" size={20} color={theme.icon} />
-                  <TextInput
-                    style={[styles.input, { color: theme.text }]}
-                    placeholder="Phone number"
-                    placeholderTextColor={theme.textSecondary}
-                    value={identifier}
-                    onChangeText={setIdentifier}
-                    keyboardType="phone-pad"
-                    autoCapitalize="none"
-                    autoComplete="tel"
-                    autoCorrect={false}
-                    editable={!submitting}
-                  />
-                </View>
-
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    { backgroundColor: theme.background, borderColor: theme.border },
-                  ]}>
                   <Ionicons name="lock-closed-outline" size={20} color={theme.icon} />
                   <TextInput
                     style={[styles.input, { color: theme.text }]}
-                    placeholder="Password"
+                    placeholder="New password"
                     placeholderTextColor={theme.textSecondary}
                     value={password}
                     onChangeText={setPassword}
@@ -139,8 +116,7 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     editable={!submitting}
-                    onSubmitEditing={handleSubmit}
-                    returnKeyType="go"
+                    autoFocus
                   />
                   <Pressable
                     onPress={() => setShowPassword((v) => !v)}
@@ -153,6 +129,27 @@ export default function LoginScreen() {
                       color={theme.icon}
                     />
                   </Pressable>
+                </View>
+
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    { backgroundColor: theme.background, borderColor: theme.border },
+                  ]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={theme.icon} />
+                  <TextInput
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder="Confirm password"
+                    placeholderTextColor={theme.textSecondary}
+                    value={confirm}
+                    onChangeText={setConfirm}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!submitting}
+                    onSubmitEditing={handleSubmit}
+                    returnKeyType="go"
+                  />
                 </View>
 
                 {error ? (
@@ -175,67 +172,19 @@ export default function LoginScreen() {
                   {submitting ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <ThemedText style={styles.buttonText}>Sign In</ThemedText>
+                    <ThemedText style={styles.buttonText}>Set Password &amp; Continue</ThemedText>
                   )}
                 </Pressable>
 
-                <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
-                  First time? Your password is your phone number — you&apos;ll set a new one after signing in.
-                </ThemedText>
-              </View>
-
-              {/* Demo accounts (sample of real members) */}
-              {demoAccounts && demoAccounts.length > 0 ? (
-                <View style={styles.demoSection}>
-                  <Pressable
-                    onPress={() => setShowDemo((v) => !v)}
-                    style={styles.demoToggle}
-                    hitSlop={6}>
-                    <Ionicons name="people-circle-outline" size={18} color={theme.tint} />
-                    <ThemedText type="small" style={{ color: theme.tint, flex: 1 }}>
-                      Sample accounts (password = phone)
+                <Pressable onPress={signOut} hitSlop={6} style={styles.signOutBtn}>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
+                    Not you?{' '}
+                    <ThemedText type="small" style={{ color: theme.tint }}>
+                      Sign out
                     </ThemedText>
-                    <Ionicons
-                      name={showDemo ? 'chevron-up' : 'chevron-down'}
-                      size={16}
-                      color={theme.tint}
-                    />
-                  </Pressable>
-
-                  {showDemo ? (
-                    <View
-                      style={[
-                        styles.demoList,
-                        { backgroundColor: theme.background, borderColor: theme.border },
-                      ]}>
-                      {demoAccounts.map((acct, i) => (
-                        <Pressable
-                          key={acct.phone}
-                          onPress={() => fillDemo(acct.phone)}
-                          style={({ pressed }) => [
-                            styles.demoItem,
-                            i > 0 && {
-                              borderTopColor: theme.border,
-                              borderTopWidth: StyleSheet.hairlineWidth,
-                            },
-                            { opacity: pressed ? 0.6 : 1 },
-                          ]}>
-                          <Avatar name={acct.name} size={32} />
-                          <View style={styles.demoItemText}>
-                            <ThemedText type="small" numberOfLines={1}>
-                              {acct.name}
-                            </ThemedText>
-                            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                              {acct.phone}
-                            </ThemedText>
-                          </View>
-                          <Ionicons name="arrow-forward" size={16} color={theme.icon} />
-                        </Pressable>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
+                  </ThemedText>
+                </Pressable>
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -255,20 +204,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.five,
   },
-  card: {
-    width: '100%',
-    gap: Spacing.four,
-  },
-  header: {
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  centerText: {
-    textAlign: 'center',
-  },
-  form: {
-    gap: Spacing.three,
-  },
+  card: { width: '100%', gap: Spacing.four },
+  header: { alignItems: 'center', gap: Spacing.two },
+  centerText: { textAlign: 'center' },
+  form: { gap: Spacing.three },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -278,20 +217,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     height: 52,
   },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    height: '100%',
-  },
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-  },
-  errorText: {
-    color: '#DC2626',
-    flex: 1,
-  },
+  input: { flex: 1, fontSize: 16, height: '100%' },
+  errorRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  errorText: { color: '#DC2626', flex: 1 },
   button: {
     height: 52,
     borderRadius: Spacing.three,
@@ -299,35 +227,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: Spacing.one,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  hint: {
-    textAlign: 'center',
-  },
-  demoSection: {
-    gap: Spacing.two,
-  },
-  demoToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  demoList: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Spacing.three,
-    overflow: 'hidden',
-  },
-  demoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    padding: Spacing.two,
-  },
-  demoItemText: {
-    flex: 1,
-    gap: 1,
-  },
+  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+  signOutBtn: { alignSelf: 'center', marginTop: Spacing.two },
 });

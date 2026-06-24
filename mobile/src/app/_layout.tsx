@@ -14,7 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 export const unstable_settings = { initialRouteName: 'index' };
 
 function RootNavigator() {
-  const { token, isReady } = useAuth();
+  const { token, user, isReady } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const theme = useTheme();
@@ -22,19 +22,32 @@ function RootNavigator() {
 
   useEffect(() => {
     if (!isReady) return;
+    const onLogin = root === 'login';
+    const onChangePassword = root === 'change-password';
+
     if (!token) {
       // Not signed in: keep out of everything except login and the splash (index).
-      if (root && root !== 'login') router.replace('/login');
-    } else if (root === 'login') {
-      // Signed in but sitting on login -> go home.
+      if (root && !onLogin) router.replace('/login');
+      return;
+    }
+
+    if (user?.mustChangePassword) {
+      // Signed in but the password is still the default → force the change.
+      if (!onChangePassword) router.replace('/change-password');
+      return;
+    }
+
+    if (onLogin || onChangePassword) {
+      // Signed in & password set → into the app.
       router.replace('/home');
     }
-  }, [token, isReady, root, router]);
+  }, [token, user, isReady, root, router]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="login" />
+      <Stack.Screen name="change-password" />
       <Stack.Screen name="(app)" />
       <Stack.Screen
         name="member/[samajId]"

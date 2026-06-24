@@ -20,6 +20,13 @@ export function membersCollection(): Collection<MemberDoc> {
   return getDb().collection<MemberDoc>(COLLECTION);
 }
 
+/** Normalize a phone string to its last-10 digits (drops country code, spaces, hyphens). */
+export function normalizePhone(input: unknown): string {
+  if (input == null) return "";
+  const digits = String(input).replace(/\D/g, "");
+  return digits.length >= 10 ? digits.slice(-10) : "";
+}
+
 export function findAllMembers(): Promise<Member[]> {
   return membersCollection()
     .find({}, { projection: PUBLIC_PROJECTION })
@@ -31,9 +38,14 @@ export function findMemberById(samajId: string): Promise<Member | null> {
   return membersCollection().findOne({ samajId }, { projection: PUBLIC_PROJECTION });
 }
 
-/** Auth lookup — keeps passwordHash, excludes _id and the photo blob. */
+/** Auth lookup by email — keeps passwordHash + mustChangePassword, drops photo blob. */
 export function findMemberByEmail(email: string): Promise<MemberDoc | null> {
   return membersCollection().findOne({ email }, { projection: { _id: 0, photo: 0 } });
+}
+
+/** Auth lookup by normalized phone — keeps passwordHash + mustChangePassword, drops photo blob. */
+export function findMemberByPhone(phone: string): Promise<MemberDoc | null> {
+  return membersCollection().findOne({ phone }, { projection: { _id: 0, photo: 0 } });
 }
 
 /** Just the stored photo for a member (or null if none). */
@@ -44,10 +56,10 @@ export async function findMemberPhoto(samajId: string): Promise<MemberPhoto | nu
 
 // --- Mutations (admin + self-service) ---
 
-/** Next sequential samajId, e.g. "SCGS-0026". */
+/** Next sequential samajId for admin-created members, e.g. "SCGS-0026". */
 export async function nextSamajId(): Promise<string> {
   const [last] = await membersCollection()
-    .find({}, { projection: { _id: 0, samajId: 1 } })
+    .find({ samajId: { $regex: /^SCGS-\d+/ } }, { projection: { _id: 0, samajId: 1 } })
     .sort({ samajId: -1 })
     .limit(1)
     .toArray();
@@ -69,8 +81,16 @@ export async function deleteMember(samajId: string): Promise<boolean> {
   return result.deletedCount > 0;
 }
 
-export async function setMemberPassword(samajId: string, passwordHash: string): Promise<boolean> {
-  const result = await membersCollection().updateOne({ samajId }, { $set: { passwordHash } });
+/** Set a member's password hash, with an explicit mustChangePassword flag. */
+export async function setMemberPassword(
+  samajId: string,
+  passwordHash: string,
+  mustChangePassword: boolean,
+): Promise<boolean> {
+  const result = await membersCollection().updateOne(
+    { samajId },
+    { $set: { passwordHash, mustChangePassword } },
+  );
   return result.matchedCount > 0;
 }
 
@@ -80,7 +100,15 @@ export async function updateMemberPhoto(samajId: string, photo: MemberPhoto): Pr
 }
 
 export async function emailExists(email: string, exceptSamajId?: string): Promise<boolean> {
+  if (!email) return false;
   const filter: Filter<MemberDoc> = { email };
+  if (exceptSamajId) filter.samajId = { $ne: exceptSamajId };
+  return (await membersCollection().countDocuments(filter)) > 0;
+}
+
+export async function phoneExists(phone: string, exceptSamajId?: string): Promise<boolean> {
+  if (!phone) return false;
+  const filter: Filter<MemberDoc> = { phone };
   if (exceptSamajId) filter.samajId = { $ne: exceptSamajId };
   return (await membersCollection().countDocuments(filter)) > 0;
 }

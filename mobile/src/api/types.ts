@@ -48,6 +48,8 @@ export type AuthUser = {
   phone: string;
   address: string;
   bloodGroup: string;
+  /** Force the user through the change-password flow on next sign-in. */
+  mustChangePassword?: boolean;
 };
 
 export type LoginResponse = {
@@ -57,5 +59,5 @@ export type LoginResponse = {
 
 export type DemoAccount = {
   name: string;
-  email: string;
+  phone: string;
 };

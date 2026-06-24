@@ -19,3 +19,10 @@ export const updatePhotoSchema = z.object({
 });
 
 export type UpdatePhotoInput = z.infer<typeof updatePhotoSchema>;
+
+/** First-time / self-initiated password change. */
+export const changePasswordSchema = z.object({
+  password: z.string().min(6, "Use at least 6 characters"),
+});
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

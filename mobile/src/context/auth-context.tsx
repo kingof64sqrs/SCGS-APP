@@ -18,9 +18,11 @@ type AuthContextValue = {
   isReady: boolean;
   /** Bumped when the current user's photo changes, to bust image caches. */
   photoBust: number;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (identifier: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (user: AuthUser) => Promise<void>;
+  /** Mark the current user's password as freshly set (clears mustChangePassword). */
+  markPasswordChanged: () => Promise<void>;
   bumpPhoto: () => void;
 };
 
@@ -52,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const res = await api.login(email.trim(), password);
+  const signIn = useCallback(async (identifier: string, password: string) => {
+    const res = await api.login(identifier.trim(), password);
     setToken(res.token);
     setUser(res.user);
     await Promise.all([
@@ -73,11 +75,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(next));
   }, []);
 
+  const markPasswordChanged = useCallback(async () => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, mustChangePassword: false };
+      AsyncStorage.setItem(USER_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
   const bumpPhoto = useCallback(() => setPhotoBust((n) => n + 1), []);
 
   const value = useMemo(
-    () => ({ token, user, isReady, photoBust, signIn, signOut, updateUser, bumpPhoto }),
-    [token, user, isReady, photoBust, signIn, signOut, updateUser, bumpPhoto],
+    () => ({
+      token,
+      user,
+      isReady,
+      photoBust,
+      signIn,
+      signOut,
+      updateUser,
+      markPasswordChanged,
+      bumpPhoto,
+    }),
+    [token, user, isReady, photoBust, signIn, signOut, updateUser, markPasswordChanged, bumpPhoto],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -5,9 +5,9 @@ export const memberSchema = z.object({
   samajId: z.string(),
   name: z.string(),
   phone: z.string(),
-  email: z.string(),
-  address: z.string(),
-  bloodGroup: z.string(),
+  email: z.string().optional().default(""),
+  address: z.string().optional().default(""),
+  bloodGroup: z.string().optional().default(""),
 });
 
 export type Member = z.infer<typeof memberSchema>;
@@ -21,5 +21,7 @@ export interface MemberPhoto {
 /** Stored member document — adds credentials + photo, never sent verbatim to clients. */
 export interface MemberDoc extends Member {
   passwordHash: string;
+  /** True until the member has set their own password (default after import / admin reset). */
+  mustChangePassword?: boolean;
   photo?: MemberPhoto;
 }
