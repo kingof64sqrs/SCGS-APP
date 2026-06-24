@@ -5,6 +5,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import {
+  AutoComplete,
   Avatar,
   Button,
   Form,
@@ -40,7 +41,7 @@ type PagedMembers = {
   total: number;
 };
 
-const GROUPS = [
+const DEFAULT_GROUPS = [
   'Office Bearers',
   'Members of the Governing Body',
   'S.B.K.V Trustees (Represented by SCGS)',
@@ -84,6 +85,15 @@ export default function GoverningBodyPage() {
     () => new Set(data.map((g) => g.samajId).filter(Boolean) as string[]),
     [data],
   );
+
+  /** Distinct groups currently in use, plus the defaults — for the AutoComplete. */
+  const groupSuggestions = useMemo(() => {
+    const set = new Set<string>(DEFAULT_GROUPS);
+    for (const g of data) if (g.group) set.add(g.group);
+    return Array.from(set)
+      .sort((a, b) => a.localeCompare(b))
+      .map((g) => ({ value: g, label: g }));
+  }, [data]);
 
   const filteredData = useMemo(() => {
     const q = listQuery.trim().toLowerCase();
@@ -140,7 +150,7 @@ export default function GoverningBodyPage() {
     setEditing(null);
     setCreating(true);
     form.resetFields();
-    form.setFieldsValue({ group: GROUPS[0] });
+    form.setFieldsValue({ group: DEFAULT_GROUPS[0] });
     setSearchTerm('');
     setMemberOptions([]);
     runSearch('');
@@ -321,8 +331,22 @@ export default function GoverningBodyPage() {
           <Form.Item name="position" label="Position" rules={[{ required: true }]}>
             <Input placeholder="e.g. President, Treasurer, …" />
           </Form.Item>
-          <Form.Item name="group" label="Group" rules={[{ required: true }]}>
-            <Select options={GROUPS.map((g) => ({ value: g, label: g }))} />
+          <Form.Item
+            name="group"
+            label="Group"
+            rules={[{ required: true, message: 'Pick or type a group name' }]}
+            extra="Pick an existing group or type a new one to create it.">
+            <AutoComplete
+              options={groupSuggestions}
+              placeholder="e.g. Office Bearers, Trustees, …"
+              filterOption={(input, option) =>
+                (option?.label ?? String(option?.value ?? ''))
+                  .toString()
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              allowClear
+            />
           </Form.Item>
           {editing?.samajId && (
             <Form.Item label="Member photo">

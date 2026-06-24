@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
+import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { LottieAnim } from './lottie-anim';
@@ -11,7 +12,7 @@ const ERROR = require('@/assets/lottie/error.json');
 export function ErrorView({ message, onRetry }: { message: string; onRetry?: () => void }) {
   const theme = useTheme();
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <LottieAnim source={ERROR} ratio={0.55} minSize={150} maxSize={240} framed />
       <ThemedText type="smallBold" style={styles.message}>
         {message}
@@ -27,7 +28,7 @@ export function ErrorView({ message, onRetry }: { message: string; onRetry?: () 
           <ThemedText style={styles.buttonText}>Retry</ThemedText>
         </Pressable>
       ) : null}
-    </View>
+    </ThemedView>
   );
 }
 
