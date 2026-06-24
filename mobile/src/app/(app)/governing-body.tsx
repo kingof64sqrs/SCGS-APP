@@ -27,7 +27,7 @@ export default function GoverningBodyScreen() {
 
   return (
     <ScreenScroll onRefresh={refetch} refreshing={refreshing}>
-      <LottieAnim source={INTRO} ratio={0.5} minSize={140} maxSize={220} />
+      <LottieAnim source={INTRO} ratio={0.5} minSize={140} maxSize={220} framed frameShape="rounded" />
       {data.map((group) => (
         <View key={group.group} style={styles.group}>
           <ThemedText type="smallBold" style={styles.groupTitle}>

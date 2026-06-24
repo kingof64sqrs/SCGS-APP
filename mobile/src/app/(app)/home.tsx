@@ -58,7 +58,7 @@ export default function HomeScreen() {
   return (
     <ScreenScroll onRefresh={refetch}>
       {/* Hero animation */}
-      <LottieAnim source={HERO} ratio={0.55} minSize={160} maxSize={240} />
+      <LottieAnim source={HERO} ratio={0.55} minSize={160} maxSize={240} framed frameShape="rounded" />
 
       {/* Hero */}
       <Card style={styles.hero}>

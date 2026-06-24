@@ -4,7 +4,7 @@ import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Avatar } from '@/components/avatar';
+import { MemberPhoto } from '@/components/member-photo';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
@@ -56,7 +56,7 @@ export function Sidebar(props: DrawerContentComponentProps) {
               styles.userCard,
               { backgroundColor: theme.backgroundElement, opacity: pressed ? 0.7 : 1 },
             ]}>
-            <Avatar name={user.name} size={40} />
+            <MemberPhoto samajId={user.samajId} name={user.name} size={40} />
             <View style={styles.userText}>
               <ThemedText type="small" numberOfLines={1} style={styles.userName}>
                 {user.name}

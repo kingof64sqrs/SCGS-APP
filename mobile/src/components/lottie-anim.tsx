@@ -1,6 +1,8 @@
 import LottieView from 'lottie-react-native';
 import type { ComponentProps } from 'react';
-import { useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
+
+import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
   source: ComponentProps<typeof LottieView>['source'];
@@ -13,6 +15,14 @@ type Props = {
   /** Minimum size used when computing from viewport. Default 120. */
   minSize?: number;
   loop?: boolean;
+  /**
+   * Render the animation inside a themed surface (white card with a hairline
+   * border) so Lotties that contain white artwork don't look broken on dark
+   * backgrounds.
+   */
+  framed?: boolean;
+  /** Shape of the frame when framed=true. Default 'circle'. */
+  frameShape?: 'circle' | 'rounded';
   style?: StyleProp<ViewStyle>;
 };
 
@@ -27,12 +37,28 @@ export function LottieAnim({
   ratio = 0.5,
   minSize = 120,
   loop = true,
+  framed = false,
+  frameShape = 'circle',
   style,
 }: Props) {
   const { width } = useWindowDimensions();
+  const theme = useTheme();
   const computed = size ?? Math.round(Math.min(maxSize, Math.max(minSize, width * ratio)));
+  const radius = frameShape === 'circle' ? computed / 2 : 22;
+
   return (
-    <View style={[{ width: computed, height: computed, alignSelf: 'center' }, style]}>
+    <View
+      style={[
+        { width: computed, height: computed, alignSelf: 'center' },
+        framed && {
+          backgroundColor: '#ffffff',
+          borderRadius: radius,
+          overflow: 'hidden',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.border,
+        },
+        style,
+      ]}>
       <LottieView source={source} autoPlay loop={loop} style={{ width: '100%', height: '100%' }} />
     </View>
   );

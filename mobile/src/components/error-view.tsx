@@ -12,7 +12,7 @@ export function ErrorView({ message, onRetry }: { message: string; onRetry?: () 
   const theme = useTheme();
   return (
     <View style={styles.container}>
-      <LottieAnim source={ERROR} ratio={0.55} minSize={150} maxSize={240} />
+      <LottieAnim source={ERROR} ratio={0.55} minSize={150} maxSize={240} framed />
       <ThemedText type="smallBold" style={styles.message}>
         {message}
       </ThemedText>

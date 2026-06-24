@@ -214,7 +214,7 @@ export default function MembersScreen() {
         ListEmptyComponent={
           !initialLoading ? (
             <View style={styles.emptyWrap}>
-              <LottieAnim source={EMPTY} ratio={0.6} minSize={160} maxSize={240} />
+              <LottieAnim source={EMPTY} ratio={0.6} minSize={160} maxSize={240} framed frameShape="rounded" />
               <ThemedText type="smallBold" style={styles.empty}>
                 No matches
               </ThemedText>

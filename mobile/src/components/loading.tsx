@@ -9,7 +9,7 @@ const LOADING = require('@/assets/lottie/loading.json');
 export function Loading({ label }: { label?: string }) {
   return (
     <View style={styles.container}>
-      <LottieAnim source={LOADING} ratio={0.55} minSize={140} maxSize={220} />
+      <LottieAnim source={LOADING} ratio={0.55} minSize={140} maxSize={220} framed />
       {label ? (
         <ThemedText themeColor="textSecondary" style={styles.label}>
           {label}

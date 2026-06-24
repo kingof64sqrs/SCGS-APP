@@ -1,5 +1,11 @@
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import {
+  Avatar,
   Button,
   Form,
   Input,
@@ -50,7 +56,10 @@ export default function GoverningBodyPage() {
   const [creating, setCreating] = useState(false);
   const [form] = Form.useForm();
 
-  // Async member search state for the Select.
+  // Search box for the GB list itself (client-side filter — list is small).
+  const [listQuery, setListQuery] = useState('');
+
+  // Async member search state for the Select inside the modal.
   const [searchTerm, setSearchTerm] = useState('');
   const [memberOptions, setMemberOptions] = useState<MemberLite[]>([]);
   const [searching, setSearching] = useState(false);
@@ -76,7 +85,19 @@ export default function GoverningBodyPage() {
     [data],
   );
 
-  /** Fire a debounced server search for members. */
+  const filteredData = useMemo(() => {
+    const q = listQuery.trim().toLowerCase();
+    if (!q) return data;
+    return data.filter(
+      (g) =>
+        g.name.toLowerCase().includes(q) ||
+        g.position.toLowerCase().includes(q) ||
+        g.group.toLowerCase().includes(q) ||
+        (g.samajId ?? '').toLowerCase().includes(q),
+    );
+  }, [data, listQuery]);
+
+  /** Debounced server search for members (modal Select). */
   const runSearch = useCallback((q: string) => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(async () => {
@@ -122,7 +143,7 @@ export default function GoverningBodyPage() {
     form.setFieldsValue({ group: GROUPS[0] });
     setSearchTerm('');
     setMemberOptions([]);
-    runSearch(''); // prime with first page
+    runSearch('');
   };
   const openEdit = (g: GBMember) => {
     setCreating(false);
@@ -174,6 +195,20 @@ export default function GoverningBodyPage() {
 
   const columns = [
     {
+      title: '',
+      key: 'photo',
+      width: 56,
+      render: (_: unknown, g: GBMember) =>
+        g.samajId ? (
+          <Avatar
+            src={`/api/members/${encodeURIComponent(g.samajId)}/photo`}
+            icon={<UserOutlined />}
+          />
+        ) : (
+          <Avatar icon={<UserOutlined />} />
+        ),
+    },
+    {
       title: 'Member',
       key: 'name',
       render: (_: unknown, g: GBMember) => (
@@ -222,10 +257,25 @@ export default function GoverningBodyPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-        <Typography.Title level={4} style={{ flex: 1, margin: 0 }}>
-          Governing Body ({data.length})
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          marginBottom: 16,
+          flexWrap: 'wrap',
+        }}>
+        <Typography.Title level={4} style={{ flex: '0 0 auto', margin: 0 }}>
+          Governing Body ({filteredData.length}
+          {listQuery && filteredData.length !== data.length ? ` / ${data.length}` : ''})
         </Typography.Title>
+        <Input.Search
+          allowClear
+          placeholder="Search by name, position, group or samajId…"
+          value={listQuery}
+          onChange={(e) => setListQuery(e.target.value)}
+          style={{ flex: '1 1 240px', maxWidth: 420 }}
+        />
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Add from members
         </Button>
@@ -234,10 +284,10 @@ export default function GoverningBodyPage() {
       <Table
         rowKey="id"
         loading={loading}
-        dataSource={data}
+        dataSource={filteredData}
         columns={columns}
         pagination={false}
-        scroll={{ x: 600 }}
+        scroll={{ x: 700 }}
       />
 
       <Modal
