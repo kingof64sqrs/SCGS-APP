@@ -14,6 +14,7 @@ import type { AuthUser } from '@/api/types';
 import {
   biometricAvailable,
   clearBiometric,
+  clearBiometricSession,
   isBiometricEnabled,
   storeBiometricSession,
   unlockBiometricSession,
@@ -109,11 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     setToken(null);
     setUser(null);
-    setBiometricEnabled(false);
+    // Keep biometricEnabled state and the BIO_FLAG so the user stays enrolled.
+    // Only clear the stored SecureStore session (the token), not the preference.
     await Promise.all([
       AsyncStorage.removeItem(TOKEN_KEY),
       AsyncStorage.removeItem(USER_KEY),
-      clearBiometric(),
+      clearBiometricSession(),
     ]);
   }, []);
 

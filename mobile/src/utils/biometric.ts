@@ -74,12 +74,28 @@ export async function unlockBiometricSession(
   }
 }
 
-/** Remove all biometric data. */
+/** Remove all biometric data (flag + session). Use when user explicitly disables biometric. */
 export async function clearBiometric(): Promise<void> {
   await Promise.all([
     AsyncStorage.removeItem(BIO_FLAG_KEY),
     SecureStore.deleteItemAsync(SECURE_SESSION_KEY).catch(() => {}),
   ]);
+}
+
+/** Clear only the stored session token, keeping the biometric preference flag. Use on sign-out. */
+export async function clearBiometricSession(): Promise<void> {
+  await SecureStore.deleteItemAsync(SECURE_SESSION_KEY).catch(() => {});
+}
+
+/** Whether there is a stored session ready to unlock (independent of the preference flag). */
+export async function hasBiometricSession(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    const stored = await SecureStore.getItemAsync(SECURE_SESSION_KEY);
+    return stored !== null;
+  } catch {
+    return false;
+  }
 }
 
 /** Human label for the bio kind. */

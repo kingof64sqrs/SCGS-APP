@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,15 +15,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { api } from '@/api/client';
-import { Avatar } from '@/components/avatar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
-import { useAsyncData } from '@/hooks/use-async-data';
 import { useTheme } from '@/hooks/use-theme';
-import { bioLabel } from '@/utils/biometric';
+import { bioLabel, hasBiometricSession } from '@/utils/biometric';
 
 const LOGO = require('@/assets/images/scgs-logo.png');
 const CARD_MAX_WIDTH = 420;
@@ -42,22 +39,18 @@ export default function LoginScreen() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [bioBusy, setBioBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: demoAccounts } = useAsyncData(useCallback((signal) => api.getDemoAccounts(signal), []));
+  // Always hold a ref to the latest enableBiometric to avoid stale closures after signIn.
+  const enableBiometricRef = useRef(enableBiometric);
+  useEffect(() => {
+    enableBiometricRef.current = enableBiometric;
+  }, [enableBiometric]);
 
   const isWide = width >= 600;
   const logoSize = Math.round(Math.min(132, Math.max(96, width * 0.3)));
-
-  const fillDemo = (phone: string) => {
-    setIdentifier(phone);
-    setPassword(phone);
-    setShowDemo(false);
-    setError(null);
-  };
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -69,22 +62,27 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await signIn(identifier, password);
-      // After a successful password login, offer biometric for next time.
-      if (biometricSupported && !biometricEnabled) {
-        const label = bioLabel(biometricKind);
-        Alert.alert(
-          `Enable ${label}?`,
-          `Use your ${label.toLowerCase()} next time to sign in faster.`,
-          [
-            { text: 'Not now', style: 'cancel' },
-            {
-              text: 'Enable',
-              onPress: () => {
-                enableBiometric().catch(() => {});
+      if (biometricSupported) {
+        if (biometricEnabled) {
+          // Already enrolled — silently refresh the stored session with the new token.
+          // Use ref to get the latest enableBiometric (avoids stale closure after await).
+          enableBiometricRef.current().catch(() => {});
+        } else {
+          const label = bioLabel(biometricKind);
+          Alert.alert(
+            `Enable ${label}?`,
+            `Use your ${label.toLowerCase()} next time to sign in faster.`,
+            [
+              { text: 'Not now', style: 'cancel' },
+              {
+                text: 'Enable',
+                onPress: () => {
+                  enableBiometricRef.current().catch(() => {});
+                },
               },
-            },
-          ],
-        );
+            ],
+          );
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed. Please try again.');
@@ -93,23 +91,31 @@ export default function LoginScreen() {
     }
   };
 
-  const handleBiometric = useCallback(async () => {
+  const handleBiometric = useCallback(async (silent = false) => {
     if (bioBusy) return;
     setBioBusy(true);
     setError(null);
     try {
+      const hasSession = await hasBiometricSession();
+      if (!hasSession) {
+        if (!silent) setError('Please sign in with your password first to set up fingerprint.');
+        return;
+      }
       const ok = await signInWithBiometric();
-      if (!ok) setError('Biometric sign-in was cancelled or failed.');
+      if (!ok && !silent) setError('Fingerprint sign-in was cancelled.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Biometric sign-in failed.');
+      if (!silent) setError(e instanceof Error ? e.message : 'Biometric sign-in failed.');
     } finally {
       setBioBusy(false);
     }
   }, [bioBusy, signInWithBiometric]);
 
-  // Auto-prompt biometrics on screen open if the user has enabled them.
+  // Auto-prompt biometrics silently on screen open when a stored session exists.
   useEffect(() => {
-    if (biometricEnabled) void handleBiometric();
+    if (!biometricEnabled) return;
+    hasBiometricSession().then((has) => {
+      if (has) void handleBiometric(true);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [biometricEnabled]);
 
@@ -253,58 +259,6 @@ export default function LoginScreen() {
                 </ThemedText>
               </View>
 
-              {/* Demo accounts (sample of real members) */}
-              {demoAccounts && demoAccounts.length > 0 ? (
-                <View style={styles.demoSection}>
-                  <Pressable
-                    onPress={() => setShowDemo((v) => !v)}
-                    style={styles.demoToggle}
-                    hitSlop={6}>
-                    <Ionicons name="people-circle-outline" size={18} color={theme.tint} />
-                    <ThemedText type="small" style={{ color: theme.tint, flex: 1 }}>
-                      Sample accounts (password = phone)
-                    </ThemedText>
-                    <Ionicons
-                      name={showDemo ? 'chevron-up' : 'chevron-down'}
-                      size={16}
-                      color={theme.tint}
-                    />
-                  </Pressable>
-
-                  {showDemo ? (
-                    <View
-                      style={[
-                        styles.demoList,
-                        { backgroundColor: theme.background, borderColor: theme.border },
-                      ]}>
-                      {demoAccounts.map((acct, i) => (
-                        <Pressable
-                          key={acct.phone}
-                          onPress={() => fillDemo(acct.phone)}
-                          style={({ pressed }) => [
-                            styles.demoItem,
-                            i > 0 && {
-                              borderTopColor: theme.border,
-                              borderTopWidth: StyleSheet.hairlineWidth,
-                            },
-                            { opacity: pressed ? 0.6 : 1 },
-                          ]}>
-                          <Avatar name={acct.name} size={32} />
-                          <View style={styles.demoItemText}>
-                            <ThemedText type="small" numberOfLines={1}>
-                              {acct.name}
-                            </ThemedText>
-                            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                              {acct.phone}
-                            </ThemedText>
-                          </View>
-                          <Ionicons name="arrow-forward" size={16} color={theme.icon} />
-                        </Pressable>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -384,28 +338,5 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: Spacing.three,
     borderWidth: StyleSheet.hairlineWidth,
-  },
-  demoSection: {
-    gap: Spacing.two,
-  },
-  demoToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  demoList: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Spacing.three,
-    overflow: 'hidden',
-  },
-  demoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    padding: Spacing.two,
-  },
-  demoItemText: {
-    flex: 1,
-    gap: 1,
   },
 });

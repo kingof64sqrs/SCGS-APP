@@ -46,7 +46,7 @@ That uploads the app to EAS Build and returns a hosted APK artifact.
 The default backend URL for the app is:
 
 ```text
-https://three-superior-arc-chief.trycloudflare.com
+https://agencies-socks-recreation-comics.trycloudflare.com
 ```
 
 If you want the production AAB instead, run:

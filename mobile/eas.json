@@ -8,7 +8,7 @@
       "developmentClient": true,
       "channel": "development",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://three-superior-arc-chief.trycloudflare.com"
+        "EXPO_PUBLIC_API_URL": "https://agencies-socks-recreation-comics.trycloudflare.com"
       }
     },
     "preview": {
@@ -18,13 +18,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://three-superior-arc-chief.trycloudflare.com"
+        "EXPO_PUBLIC_API_URL": "https://agencies-socks-recreation-comics.trycloudflare.com"
       }
     },
     "production": {
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://three-superior-arc-chief.trycloudflare.com"
+        "EXPO_PUBLIC_API_URL": "https://agencies-socks-recreation-comics.trycloudflare.com"
       }
     }
   },

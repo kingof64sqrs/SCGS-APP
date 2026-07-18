@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 
-const DEFAULT_API_URL = 'https://three-superior-arc-chief.trycloudflare.com';
+const DEFAULT_API_URL = 'https://agencies-socks-recreation-comics.trycloudflare.com';
 
 /**
  * Base URL of the SCGS backend API.

@@ -1,6 +1,6 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-const DEFAULT_API_URL = 'https://three-superior-arc-chief.trycloudflare.com';
+const DEFAULT_API_URL = 'https://agencies-socks-recreation-comics.trycloudflare.com';
 
 function normalizeApiUrl(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
