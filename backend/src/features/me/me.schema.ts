@@ -1,12 +1,29 @@
 import { z } from "zod";
 
+const optionalText = () => z.string().trim().max(500).optional();
+
 /** Fields a member may edit on their own profile. */
 export const updateProfileSchema = z
   .object({
+    // Core (name required if present).
     name: z.string().trim().min(1).optional(),
-    phone: z.string().trim().min(1).optional(),
-    address: z.string().trim().min(1).optional(),
-    bloodGroup: z.string().trim().min(1).optional(),
+    whatsapp: optionalText(),
+    email: optionalText(),
+    address: optionalText(),
+    bloodGroup: optionalText(),
+    // Extended / optional profile.
+    dateOfBirth: optionalText(),
+    nativePlace: optionalText(),
+    gnati: optionalText(),
+    maritalStatus: optionalText(),
+    occupation: optionalText(),
+    occupationDetails: optionalText(),
+    officeAddress: optionalText(),
+    father: optionalText(),
+    mother: optionalText(),
+    spouse: optionalText(),
+    children: optionalText(),
+    siblings: optionalText(),
   })
   .strict();
 

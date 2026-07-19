@@ -5,7 +5,7 @@ import type { Member, MemberDoc, MemberPhoto } from "./member.schema.js";
 
 const COLLECTION = "members";
 
-/** Public fields only — drops _id, passwordHash and the (large) photo blob. */
+/** Light projection for the directory list + search (compact rows). */
 const PUBLIC_PROJECTION = {
   _id: 0,
   samajId: 1,
@@ -14,6 +14,17 @@ const PUBLIC_PROJECTION = {
   email: 1,
   address: 1,
   bloodGroup: 1,
+} as const;
+
+/**
+ * Full profile projection for a single member (detail view + /api/me) — every
+ * stored field EXCEPT the sensitive ones. Auto-includes new profile fields.
+ */
+const FULL_PROJECTION = {
+  _id: 0,
+  passwordHash: 0,
+  photo: 0,
+  pushTokens: 0,
 } as const;
 
 export function membersCollection(): Collection<MemberDoc> {
@@ -68,7 +79,7 @@ export async function findMembersPage(opts: {
 }
 
 export function findMemberById(samajId: string): Promise<Member | null> {
-  return membersCollection().findOne({ samajId }, { projection: PUBLIC_PROJECTION });
+  return membersCollection().findOne({ samajId }, { projection: FULL_PROJECTION });
 }
 
 /** Auth lookup by email — keeps passwordHash + mustChangePassword, drops photo blob. */

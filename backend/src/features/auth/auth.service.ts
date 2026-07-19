@@ -7,6 +7,7 @@ import {
   findMemberByPhone,
   normalizePhone,
 } from "../members/member.model.js";
+import { memberSchema } from "../members/member.schema.js";
 import type { AuthUser, DemoAccount, LoginInput, LoginResponse } from "./auth.schema.js";
 
 /**
@@ -26,13 +27,10 @@ export async function login(input: LoginInput): Promise<LoginResponse> {
     throw new UnauthorizedError("Invalid phone/email or password");
   }
 
+  // memberSchema.parse keeps exactly the public profile fields (defaulting any
+  // missing optional ones) and drops passwordHash / pushTokens.
   const user: AuthUser = {
-    samajId: member.samajId,
-    name: member.name,
-    email: member.email ?? "",
-    phone: member.phone ?? "",
-    address: member.address ?? "",
-    bloodGroup: member.bloodGroup ?? "",
+    ...memberSchema.parse(member),
     mustChangePassword: !!member.mustChangePassword,
   };
 

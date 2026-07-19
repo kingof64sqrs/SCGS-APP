@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { Member } from "../members/member.schema.js";
+
 const REQUIRED = "Phone (or email) and password are required";
 
 /** Validation schema for POST /api/auth/login. The identifier may be a phone or email. */
@@ -16,13 +18,8 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 /** Authenticated user profile (the member who logged in). */
-export interface AuthUser {
-  samajId: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  bloodGroup: string;
+/** The authenticated member's full profile (all fields they can see/edit). */
+export interface AuthUser extends Member {
   /** Force the client to push the user through a "set new password" flow. */
   mustChangePassword?: boolean;
 }

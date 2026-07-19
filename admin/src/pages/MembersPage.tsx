@@ -8,6 +8,7 @@ import {
 import {
   Avatar,
   Button,
+  Collapse,
   Form,
   Input,
   Modal,
@@ -31,6 +32,19 @@ type Member = {
   phone: string;
   address: string;
   bloodGroup: string;
+  whatsapp?: string;
+  dateOfBirth?: string;
+  nativePlace?: string;
+  gnati?: string;
+  maritalStatus?: string;
+  occupation?: string;
+  occupationDetails?: string;
+  officeAddress?: string;
+  father?: string;
+  mother?: string;
+  spouse?: string;
+  children?: string;
+  siblings?: string;
 };
 
 type PagedMembers = {
@@ -105,10 +119,17 @@ export default function MembersPage() {
     form.resetFields();
     form.setFieldsValue({ bloodGroup: 'O+' });
   };
-  const openEdit = (m: Member) => {
+  const openEdit = async (m: Member) => {
     setCreating(false);
     setEditing(m);
-    form.setFieldsValue(m);
+    form.setFieldsValue(m); // fill with what we have from the list immediately
+    try {
+      // Fetch the full profile (list projection omits extended fields).
+      const full = await api<Member>(`/members/${encodeURIComponent(m.samajId)}`);
+      form.setFieldsValue(full);
+    } catch {
+      // keep the list values if the full fetch fails
+    }
   };
   const close = () => {
     setCreating(false);
@@ -288,12 +309,67 @@ export default function MembersPage() {
           <Form.Item name="phone" label="Phone (login)" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
+          <Form.Item name="whatsapp" label="WhatsApp number">
+            <Input />
+          </Form.Item>
           <Form.Item name="bloodGroup" label="Blood group">
             <Input />
           </Form.Item>
-          <Form.Item name="address" label="Address">
+          <Form.Item name="address" label="Home address">
             <Input.TextArea rows={2} />
           </Form.Item>
+
+          <Collapse
+            ghost
+            style={{ marginBottom: 12 }}
+            items={[
+              {
+                key: 'more',
+                label: 'More profile details (optional)',
+                children: (
+                  <>
+                    <Form.Item name="dateOfBirth" label="Date of Birth">
+                      <Input placeholder="e.g. 15 Aug 1980" />
+                    </Form.Item>
+                    <Form.Item name="nativePlace" label="Native Place (Gujarat)">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="gnati" label="Gnati (Community)">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="maritalStatus" label="Marital Status">
+                      <Input placeholder="Single / Married / …" />
+                    </Form.Item>
+                    <Form.Item name="occupation" label="Occupation">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="occupationDetails" label="Occupation Details">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                    <Form.Item name="officeAddress" label="Office Address">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                    <Form.Item name="father" label="Father">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="mother" label="Mother">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="spouse" label="Spouse">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="children" label="Children">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                    <Form.Item name="siblings" label="Siblings">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                  </>
+                ),
+              },
+            ]}
+          />
+
           {editing && (
             <Form.Item label="Photo">
               <PhotoUpload samajId={editing.samajId} />

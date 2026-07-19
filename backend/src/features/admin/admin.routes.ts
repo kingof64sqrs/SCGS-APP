@@ -120,6 +120,22 @@ adminRouter.put(
 
 // ----------------------------- Members -----------------------------
 
+const extendedProfileFields = {
+  whatsapp: z.string().trim().optional(),
+  dateOfBirth: z.string().trim().optional(),
+  nativePlace: z.string().trim().optional(),
+  gnati: z.string().trim().optional(),
+  maritalStatus: z.string().trim().optional(),
+  occupation: z.string().trim().optional(),
+  occupationDetails: z.string().trim().optional(),
+  officeAddress: z.string().trim().optional(),
+  father: z.string().trim().optional(),
+  mother: z.string().trim().optional(),
+  spouse: z.string().trim().optional(),
+  children: z.string().trim().optional(),
+  siblings: z.string().trim().optional(),
+};
+
 const memberCreateSchema = z.object({
   name: z.string().trim().min(1),
   email: z.string().trim().email().optional().or(z.literal("")),
@@ -127,6 +143,7 @@ const memberCreateSchema = z.object({
   address: z.string().trim().optional().default(""),
   bloodGroup: z.string().trim().optional().default(""),
   password: z.string().min(1).optional(),
+  ...extendedProfileFields,
 });
 const memberUpdateSchema = memberCreateSchema.partial();
 const passwordSchema = z.object({ password: z.string().min(1) });
@@ -157,12 +174,14 @@ adminRouter.post(
   "/members",
   validateBody(memberCreateSchema),
   asyncHandler(async (req, res) => {
-    const { password, ...fields } = req.body as z.infer<typeof memberCreateSchema>;
-    const email = (fields.email ?? "").toLowerCase();
+    const { password, phone: rawPhone, email: rawEmail, ...extra } = req.body as z.infer<
+      typeof memberCreateSchema
+    >;
+    const email = (rawEmail ?? "").toLowerCase();
     if (email && (await emailExists(email))) {
       throw new BadRequestError("A member with this email already exists");
     }
-    const phone = normalizePhone(fields.phone);
+    const phone = normalizePhone(rawPhone);
     if (!phone) throw new BadRequestError("Phone number must have at least 10 digits");
     if (await phoneExists(phone)) {
       throw new BadRequestError("A member with this phone already exists");
@@ -172,12 +191,10 @@ adminRouter.post(
     // If the admin supplied an explicit password, honour it (still must-change).
     const initialPassword = password ?? phone;
     await insertMember({
+      ...extra, // name, address, bloodGroup + any extended profile fields
       samajId,
-      name: fields.name,
       email,
       phone,
-      address: fields.address ?? "",
-      bloodGroup: fields.bloodGroup ?? "",
       passwordHash: hashPassword(initialPassword),
       mustChangePassword: true,
     });

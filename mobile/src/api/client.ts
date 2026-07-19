@@ -12,7 +12,28 @@ import type {
   PagedMembers,
 } from './types';
 
-type ProfilePatch = Partial<Pick<AuthUser, 'name' | 'phone' | 'address' | 'bloodGroup'>>;
+type ProfilePatch = Partial<
+  Pick<
+    AuthUser,
+    | 'name'
+    | 'email'
+    | 'address'
+    | 'bloodGroup'
+    | 'whatsapp'
+    | 'dateOfBirth'
+    | 'nativePlace'
+    | 'gnati'
+    | 'maritalStatus'
+    | 'occupation'
+    | 'occupationDetails'
+    | 'officeAddress'
+    | 'father'
+    | 'mother'
+    | 'spouse'
+    | 'children'
+    | 'siblings'
+  >
+>;
 
 export class ApiError extends Error {
   status: number;

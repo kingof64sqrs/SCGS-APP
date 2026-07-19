@@ -1,3 +1,20 @@
+/** Extended profile fields a member can fill (all optional). */
+export type MemberProfileExtra = {
+  whatsapp?: string;
+  dateOfBirth?: string;
+  nativePlace?: string;
+  gnati?: string;
+  maritalStatus?: string;
+  occupation?: string;
+  occupationDetails?: string;
+  officeAddress?: string;
+  father?: string;
+  mother?: string;
+  spouse?: string;
+  children?: string;
+  siblings?: string;
+};
+
 export type Member = {
   samajId: string;
   name: string;
@@ -5,7 +22,7 @@ export type Member = {
   email: string;
   address: string;
   bloodGroup: string;
-};
+} & MemberProfileExtra;
 
 export type GoverningBodyPerson = {
   name: string;
@@ -86,7 +103,7 @@ export type AuthUser = {
   bloodGroup: string;
   /** Force the user through the change-password flow on next sign-in. */
   mustChangePassword?: boolean;
-};
+} & MemberProfileExtra;
 
 export type LoginResponse = {
   token: string;

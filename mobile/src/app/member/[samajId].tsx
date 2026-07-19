@@ -93,7 +93,45 @@ export default function MemberDetailScreen() {
   if (error || !member) return <ErrorView message={error ?? 'Member not found'} onRetry={refetch} />;
 
   const telDigits = member.phone.replace(/[^0-9+]/g, '');
-  const waDigits = member.phone.replace(/[^0-9]/g, '');
+  const waSource = member.whatsapp && member.whatsapp.trim() ? member.whatsapp : member.phone;
+  const waDigits = waSource.replace(/[^0-9]/g, '');
+
+  // Build sections of only the fields the member has filled.
+  type Row = { icon: keyof typeof Ionicons.glyphMap; label: string; value?: string };
+  const filled = (rows: Row[]) => rows.filter((r) => r.value && r.value.trim());
+
+  const personal = filled([
+    { icon: 'calendar-outline', label: 'Date of Birth', value: member.dateOfBirth },
+    { icon: 'earth-outline', label: 'Native Place', value: member.nativePlace },
+    { icon: 'people-circle-outline', label: 'Gnati', value: member.gnati },
+    { icon: 'heart-outline', label: 'Marital Status', value: member.maritalStatus },
+  ]);
+  const work = filled([
+    { icon: 'briefcase-outline', label: 'Occupation', value: member.occupation },
+    { icon: 'document-text-outline', label: 'Details', value: member.occupationDetails },
+    { icon: 'business-outline', label: 'Office Address', value: member.officeAddress },
+  ]);
+  const family = filled([
+    { icon: 'man-outline', label: 'Father', value: member.father },
+    { icon: 'woman-outline', label: 'Mother', value: member.mother },
+    { icon: 'heart-circle-outline', label: 'Spouse', value: member.spouse },
+    { icon: 'happy-outline', label: 'Children', value: member.children },
+    { icon: 'people-outline', label: 'Siblings', value: member.siblings },
+  ]);
+
+  const Section = ({ title, rows }: { title: string; rows: Row[] }) =>
+    rows.length ? (
+      <>
+        <ThemedText type="smallBold" style={styles.sectionTitle}>
+          {title}
+        </ThemedText>
+        <Card style={styles.detailsCard}>
+          {rows.map((r, i) => (
+            <DetailRow key={r.label} icon={r.icon} label={r.label} value={r.value ?? ''} last={i === rows.length - 1} />
+          ))}
+        </Card>
+      </>
+    ) : null;
 
   return (
     <ScreenScroll>
@@ -140,10 +178,19 @@ export default function MemberDetailScreen() {
         Contact Details
       </ThemedText>
       <Card style={styles.detailsCard}>
-        <DetailRow icon="call-outline" label="Phone" value={member.phone} />
-        <DetailRow icon="mail-outline" label="Email" value={member.email} />
+        <DetailRow icon="call-outline" label="Mobile" value={member.phone} />
+        {member.whatsapp && member.whatsapp.trim() ? (
+          <DetailRow icon="logo-whatsapp" label="WhatsApp" value={member.whatsapp} />
+        ) : null}
+        {member.email && member.email.trim() ? (
+          <DetailRow icon="mail-outline" label="Email" value={member.email} />
+        ) : null}
         <DetailRow icon="location-outline" label="Address" value={member.address} last />
       </Card>
+
+      <Section title="Personal" rows={personal} />
+      <Section title="Occupation" rows={work} />
+      <Section title="Family" rows={family} />
     </ScreenScroll>
   );
 }
