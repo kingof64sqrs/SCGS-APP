@@ -8,7 +8,6 @@ import { MemberPhoto } from '@/components/member-photo';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
-import { useNotifications } from '@/context/notifications-context';
 import { useTheme } from '@/hooks/use-theme';
 
 const LOGO = require('@/assets/images/scgs-logo.png');
@@ -24,7 +23,6 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'members', label: 'Member Directory', icon: 'people-outline' },
   { name: 'governing-body', label: 'Governing Body', icon: 'ribbon-outline' },
   { name: 'events', label: 'Events', icon: 'calendar-outline' },
-  { name: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
   { name: 'about', label: 'About Us', icon: 'information-circle-outline' },
   { name: 'facilities', label: 'Facilities', icon: 'business-outline' },
   { name: 'contact', label: 'Contact Us', icon: 'call-outline' },
@@ -35,7 +33,6 @@ export function Sidebar(props: DrawerContentComponentProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { unread } = useNotifications();
 
   const activeRoute = props.state.routes[props.state.index]?.name;
 
@@ -88,11 +85,6 @@ export function Sidebar(props: DrawerContentComponentProps) {
                   style={[styles.navLabel, { color: active ? theme.tint : theme.text }]}>
                   {item.label}
                 </ThemedText>
-                {item.name === 'notifications' && unread > 0 ? (
-                  <View style={[styles.badge, { backgroundColor: theme.tint }]}>
-                    <ThemedText style={styles.badgeText}>{unread > 99 ? '99+' : unread}</ThemedText>
-                  </View>
-                ) : null}
               </Pressable>
             );
           })}
@@ -146,15 +138,6 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
   },
   navLabel: { flex: 1 },
-  badge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    paddingHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     padding: Spacing.three,

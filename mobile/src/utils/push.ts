@@ -3,15 +3,20 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-// Show alerts + play sound when a push arrives in the foreground.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Expo Go on Android (SDK 53+) logs a console.error on import but does not throw.
+// All actual API calls are wrapped in try/catch so they fail silently in Expo Go.
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+} catch {
+  // Expo Go — skip silently.
+}
 
 /**
  * Ask for permission and return this device's Expo push token, or null if
@@ -43,7 +48,7 @@ export async function registerForPush(): Promise<string | null> {
     );
     return token.data;
   } catch {
-    // Expo Go (SDK 53+) can't get an Android push token — fail quietly.
+    // Expo Go (SDK 53+) — fail quietly.
     return null;
   }
 }

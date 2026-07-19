@@ -1,5 +1,6 @@
 import { Drawer } from 'expo-router/drawer';
 
+import { NotificationsBell } from '@/components/notifications-bell';
 import { Sidebar } from '@/components/sidebar';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -15,12 +16,13 @@ export default function AppLayout() {
         headerShadowVisible: false,
         drawerStyle: { backgroundColor: theme.background, width: 300 },
         drawerType: 'front',
+        headerRight: () => <NotificationsBell />,
       }}>
       <Drawer.Screen name="home" options={{ title: 'Home' }} />
       <Drawer.Screen name="members" options={{ title: 'Member Directory' }} />
       <Drawer.Screen name="governing-body" options={{ title: 'Governing Body' }} />
       <Drawer.Screen name="events" options={{ title: 'Events' }} />
-      <Drawer.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Drawer.Screen name="notifications" options={{ title: 'Notifications', headerRight: () => null }} />
       <Drawer.Screen name="about" options={{ title: 'About Us' }} />
       <Drawer.Screen name="facilities" options={{ title: 'Facilities' }} />
       <Drawer.Screen name="contact" options={{ title: 'Contact Us' }} />

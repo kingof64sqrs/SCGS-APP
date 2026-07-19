@@ -66,14 +66,19 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [token, refresh]);
 
   // Refresh the list whenever a push arrives (foreground) or is tapped.
+  // Wrapped in try/catch — Expo Go on Android (SDK 53+) throws on listener calls.
   useEffect(() => {
     if (!token) return;
-    const received = Notifications.addNotificationReceivedListener(() => void refresh());
-    const responded = Notifications.addNotificationResponseReceivedListener(() => void refresh());
-    return () => {
-      received.remove();
-      responded.remove();
-    };
+    try {
+      const received = Notifications.addNotificationReceivedListener(() => void refresh());
+      const responded = Notifications.addNotificationResponseReceivedListener(() => void refresh());
+      return () => {
+        received.remove();
+        responded.remove();
+      };
+    } catch {
+      // Expo Go — listeners unavailable, skip silently.
+    }
   }, [token, refresh]);
 
   const markRead = useCallback(
