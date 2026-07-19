@@ -9,6 +9,10 @@ export interface Env {
   nodeEnv: string;
   adminKey: string;
   tokenSecret: string;
+  /** WhatsApp Cloud API access token (optional). */
+  whatsappToken: string;
+  /** WhatsApp Cloud API phone-number id (optional). */
+  whatsappPhoneId: string;
 }
 
 export const env: Env = {
@@ -20,4 +24,7 @@ export const env: Env = {
   adminKey: process.env.ADMIN_KEY ?? "scgs-admin",
   // Secret used to sign member session tokens.
   tokenSecret: process.env.TOKEN_SECRET ?? "scgs-dev-secret-change-me",
+  // WhatsApp Cloud API (leave blank to disable WhatsApp broadcasts).
+  whatsappToken: process.env.WHATSAPP_TOKEN ?? "",
+  whatsappPhoneId: process.env.WHATSAPP_PHONE_ID ?? "",
 };

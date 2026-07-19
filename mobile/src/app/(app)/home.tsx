@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { api } from '@/api/client';
 import { Card } from '@/components/card';
 import { ErrorView } from '@/components/error-view';
+import { EventTicker } from '@/components/event-ticker';
 import { Loading } from '@/components/loading';
 import { LottieAnim } from '@/components/lottie-anim';
 import { ScreenScroll } from '@/components/screen-scroll';
@@ -20,7 +21,7 @@ const LOGO = require('@/assets/images/scgs-logo.png');
 const HERO = require('@/assets/lottie/home-hero.json');
 
 type QuickLink = {
-  href: '/members' | '/governing-body' | '/about' | '/facilities' | '/contact';
+  href: '/members' | '/governing-body' | '/events' | '/about' | '/facilities' | '/contact';
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
 };
@@ -28,6 +29,7 @@ type QuickLink = {
 const QUICK_LINKS: QuickLink[] = [
   { href: '/members', label: 'Member Directory', icon: 'people-outline' },
   { href: '/governing-body', label: 'Governing Body', icon: 'ribbon-outline' },
+  { href: '/events', label: 'Events', icon: 'calendar-outline' },
   { href: '/about', label: 'About Us', icon: 'information-circle-outline' },
   { href: '/facilities', label: 'Facilities', icon: 'business-outline' },
   { href: '/contact', label: 'Contact Us', icon: 'call-outline' },
@@ -48,6 +50,9 @@ export default function HomeScreen() {
   const { data: about, loading, error, refetch } = useAsyncData(
     useCallback((signal) => api.getAbout(token, signal), [token]),
   );
+  const { data: events } = useAsyncData(
+    useCallback((signal) => api.getEvents(token, signal), [token]),
+  );
 
   if (loading) return <Loading label="Loading…" />;
   if (error || !about) return <ErrorView message={error ?? 'No data'} onRetry={refetch} />;
@@ -59,6 +64,9 @@ export default function HomeScreen() {
     <ScreenScroll onRefresh={refetch}>
       {/* Hero animation */}
       <LottieAnim source={HERO} ratio={0.55} minSize={160} maxSize={240} framed frameShape="rounded" />
+
+      {/* Auto-scrolling events */}
+      {events && events.length > 0 ? <EventTicker events={events} /> : null}
 
       {/* Hero */}
       <Card style={styles.hero}>

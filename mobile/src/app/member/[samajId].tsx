@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useAsyncData } from '@/hooks/use-async-data';
+import { useScreenshotGuard } from '@/hooks/use-screenshot-guard';
 import { useTheme } from '@/hooks/use-theme';
 
 function openUrl(url: string) {
@@ -74,6 +75,7 @@ function DetailRow({
 }
 
 export default function MemberDetailScreen() {
+  useScreenshotGuard();
   const theme = useTheme();
   const { samajId } = useLocalSearchParams<{ samajId: string }>();
   const { token } = useAuth();

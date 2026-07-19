@@ -49,6 +49,34 @@ export type PagedMembers = {
   totalPages: number;
 };
 
+export type EventItem = {
+  id: string;
+  title: string;
+  description: string;
+  location?: string;
+  eventDate?: string;
+  active: boolean;
+  createdAt: string;
+  hasBanner: boolean;
+};
+
+export type NotificationType = 'event' | 'broadcast';
+
+export type AppNotification = {
+  id: string;
+  title: string;
+  body: string;
+  type: NotificationType;
+  refId?: string;
+  createdAt: string;
+  read: boolean;
+};
+
+export type NotificationsResponse = {
+  items: AppNotification[];
+  unread: number;
+};
+
 export type AuthUser = {
   samajId: string;
   name: string;

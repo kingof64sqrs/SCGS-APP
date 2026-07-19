@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/context/auth-context';
+import { NotificationsProvider } from '@/context/notifications-context';
 import { ThemeModeProvider } from '@/context/theme-context';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -61,6 +62,17 @@ function RootNavigator() {
           headerShadowVisible: false,
         }}
       />
+      <Stack.Screen
+        name="event/[id]"
+        options={{
+          headerShown: true,
+          title: 'Event',
+          headerStyle: { backgroundColor: theme.background },
+          headerTintColor: theme.text,
+          headerTitleStyle: { fontWeight: '600' },
+          headerShadowVisible: false,
+        }}
+      />
     </Stack>
   );
 }
@@ -71,8 +83,10 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeModeProvider>
           <AuthProvider>
-            <RootNavigator />
-            <StatusBar style="auto" />
+            <NotificationsProvider>
+              <RootNavigator />
+              <StatusBar style="auto" />
+            </NotificationsProvider>
           </AuthProvider>
         </ThemeModeProvider>
       </SafeAreaProvider>

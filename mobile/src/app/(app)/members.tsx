@@ -20,6 +20,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
+import { useScreenshotGuard } from '@/hooks/use-screenshot-guard';
 import { useTheme } from '@/hooks/use-theme';
 
 const EMPTY = require('@/assets/lottie/empty-search.json');
@@ -55,6 +56,7 @@ function MemberRow({ member, onPress }: { member: Member; onPress: () => void })
 }
 
 export default function MembersScreen() {
+  useScreenshotGuard();
   const theme = useTheme();
   const router = useRouter();
   const { token } = useAuth();

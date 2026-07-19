@@ -234,7 +234,7 @@ export default function LoginScreen() {
 
                 {biometricEnabled ? (
                   <Pressable
-                    onPress={handleBiometric}
+                    onPress={() => handleBiometric()}
                     disabled={bioBusy}
                     style={({ pressed }) => [
                       styles.bioButton,

@@ -16,6 +16,16 @@ import {
 } from "../facilities/facilities.model.js";
 import { facilitySchema } from "../facilities/facilities.schema.js";
 import {
+  deleteEvent,
+  findEvent,
+  insertEvent,
+  listAllEvents,
+  updateEvent,
+} from "../events/events.model.js";
+import { eventCreateSchema, eventUpdateSchema } from "../events/events.schema.js";
+import { dispatchNotification } from "../notifications/notifications.service.js";
+import { sendWhatsAppBulk, whatsappConfigured } from "../notifications/whatsapp.service.js";
+import {
   createGoverningBody,
   deleteGoverningBody,
   listGoverningBodyDocs,
@@ -350,5 +360,131 @@ adminRouter.delete(
     const ok = await deleteFacility(req.params.id);
     if (!ok) throw new NotFoundError("Facility not found");
     res.json({ ok: true });
+  }),
+);
+
+// ------------------------------ Events -----------------------------
+
+adminRouter.get(
+  "/events",
+  asyncHandler(async (_req, res) => {
+    res.json(await listAllEvents());
+  }),
+);
+
+const eventCreateBody = eventCreateSchema.extend({
+  notify: z.boolean().optional().default(true),
+});
+
+/** Create an event. If `notify` (default true), push + in-app alert everyone. */
+adminRouter.post(
+  "/events",
+  validateBody(eventCreateBody),
+  asyncHandler(async (req, res) => {
+    const { notify, ...event } = req.body as z.infer<typeof eventCreateBody>;
+    const id = await insertEvent({
+      title: event.title,
+      description: event.description,
+      location: event.location ?? "",
+      eventDate: event.eventDate ?? "",
+      active: event.active ?? true,
+      createdAt: new Date().toISOString(),
+      ...(event.banner ? { banner: event.banner } : {}),
+    });
+
+    let dispatch = null;
+    if (notify) {
+      dispatch = await dispatchNotification({
+        title: `New event: ${event.title}`,
+        body: event.eventDate ? `${event.eventDate} — ${event.description}` : event.description,
+        type: "event",
+        refId: id,
+      });
+    }
+    res.status(201).json({ id, notified: dispatch });
+  }),
+);
+
+adminRouter.put(
+  "/events/:id",
+  validateBody(eventUpdateSchema),
+  asyncHandler(async (req, res) => {
+    const ok = await updateEvent(req.params.id, req.body);
+    if (!ok) throw new NotFoundError("Event not found");
+    res.json({ ok: true });
+  }),
+);
+
+adminRouter.delete(
+  "/events/:id",
+  asyncHandler(async (req, res) => {
+    const ok = await deleteEvent(req.params.id);
+    if (!ok) throw new NotFoundError("Event not found");
+    res.json({ ok: true });
+  }),
+);
+
+/** GET /api/admin/events/:id -> single event (admin view) */
+adminRouter.get(
+  "/events/:id",
+  asyncHandler(async (req, res) => {
+    const ev = await findEvent(req.params.id);
+    if (!ev) throw new NotFoundError("Event not found");
+    res.json(ev);
+  }),
+);
+
+// ---------------------------- Broadcast ----------------------------
+
+const broadcastSchema = z.object({
+  title: z.string().trim().min(1),
+  message: z.string().trim().min(1),
+  /** Also send via WhatsApp Cloud API (if configured). */
+  whatsapp: z.boolean().optional().default(false),
+});
+
+/** GET /api/admin/broadcast/status -> whether WhatsApp is configured. */
+adminRouter.get("/broadcast/status", (_req, res) => {
+  res.json({ whatsappConfigured: whatsappConfigured() });
+});
+
+/**
+ * POST /api/admin/broadcast
+ * Sends an in-app notification + Expo push to everyone. Optionally also fans
+ * out over WhatsApp Cloud API (best effort, only if configured).
+ */
+adminRouter.post(
+  "/broadcast",
+  validateBody(broadcastSchema),
+  asyncHandler(async (req, res) => {
+    const { title, message, whatsapp } = req.body as z.infer<typeof broadcastSchema>;
+
+    const dispatch = await dispatchNotification({
+      title,
+      body: message,
+      type: "broadcast",
+    });
+
+    let whatsappSent = 0;
+    let whatsappAttempted = false;
+    if (whatsapp && whatsappConfigured()) {
+      whatsappAttempted = true;
+      const docs = await membersCollection()
+        .find({ phone: { $exists: true, $ne: "" } }, { projection: { _id: 0, phone: 1 } })
+        .toArray();
+      const phones = docs
+        .map((d) => (d as { phone?: string }).phone)
+        .filter((p): p is string => !!p);
+      whatsappSent = await sendWhatsAppBulk(phones, `*${title}*\n\n${message}`);
+    }
+
+    res.json({
+      notificationId: dispatch.notificationId,
+      pushAccepted: dispatch.pushAccepted,
+      tokenCount: dispatch.tokenCount,
+      whatsappConfigured: whatsappConfigured(),
+      whatsappAttempted,
+      whatsappSent,
+    });
   }),
 );

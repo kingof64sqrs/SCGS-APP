@@ -3,10 +3,12 @@ import type {
   AboutContent,
   AuthUser,
   DemoAccount,
+  EventItem,
   Facility,
   GoverningBodyGroup,
   LoginResponse,
   Member,
+  NotificationsResponse,
   PagedMembers,
 } from './types';
 
@@ -117,4 +119,31 @@ export const api = {
 
   getFacilities: (token?: string | null, signal?: AbortSignal) =>
     request<Facility[]>('/api/facilities', { token, signal }),
+
+  getEvents: (token?: string | null, signal?: AbortSignal) =>
+    request<EventItem[]>('/api/events', { token, signal }),
+
+  getEvent: (id: string, token?: string | null, signal?: AbortSignal) =>
+    request<EventItem>(`/api/events/${encodeURIComponent(id)}`, { token, signal }),
+
+  // --- Notifications / push ---
+
+  registerPushToken: (token: string | null, expoToken: string, signal?: AbortSignal) =>
+    request<{ ok: boolean }>('/api/me/push-token', {
+      method: 'POST',
+      body: { token: expoToken },
+      token,
+      signal,
+    }),
+
+  getNotifications: (token: string | null, signal?: AbortSignal) =>
+    request<NotificationsResponse>('/api/me/notifications', { token, signal }),
+
+  markNotificationsRead: (token: string | null, id?: string, signal?: AbortSignal) =>
+    request<{ ok: boolean }>('/api/me/notifications/read', {
+      method: 'POST',
+      body: id ? { id } : {},
+      token,
+      signal,
+    }),
 };

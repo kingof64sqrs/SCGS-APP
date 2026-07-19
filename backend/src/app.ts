@@ -10,6 +10,7 @@ import { requestLogger } from "./core/middleware/request-logger.js";
 import { aboutRouter } from "./features/about/about.routes.js";
 import { adminRouter } from "./features/admin/admin.routes.js";
 import { authRouter } from "./features/auth/auth.routes.js";
+import { eventsRouter } from "./features/events/events.routes.js";
 import { facilitiesRouter } from "./features/facilities/facilities.routes.js";
 import { governingBodyRouter } from "./features/governing-body/governing-body.routes.js";
 import { meRouter } from "./features/me/me.routes.js";
@@ -35,6 +36,7 @@ export function createApp(): Express {
   app.use("/api/governing-body", governingBodyRouter);
   app.use("/api/about", aboutRouter);
   app.use("/api/facilities", facilitiesRouter);
+  app.use("/api/events", eventsRouter);
   app.use("/api/me", meRouter);
 
   // Admin API.

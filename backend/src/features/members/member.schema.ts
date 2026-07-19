@@ -24,4 +24,6 @@ export interface MemberDoc extends Member {
   /** True until the member has set their own password (default after import / admin reset). */
   mustChangePassword?: boolean;
   photo?: MemberPhoto;
+  /** Registered Expo push tokens for this member's devices. */
+  pushTokens?: string[];
 }

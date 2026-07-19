@@ -26,6 +26,14 @@
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/scgs-logo.png",
+          "color": "#1E3A8A"
+        }
+      ],
       [
         "expo-splash-screen",
         {

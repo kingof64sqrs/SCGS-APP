@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { api, clearKey, getKey, LOGO, NAVY, setKey } from './api';
 import AboutPage from './pages/AboutPage';
+import BroadcastPage from './pages/BroadcastPage';
+import EventsPage from './pages/EventsPage';
 import FacilitiesPage from './pages/FacilitiesPage';
 import GoverningBodyPage from './pages/GoverningBodyPage';
 import MembersPage from './pages/MembersPage';
@@ -88,6 +90,8 @@ function Shell({ onLogout }: { onLogout: () => void }) {
             items={[
               { key: 'members', label: 'Members', children: <MembersPage /> },
               { key: 'gb', label: 'Governing Body', children: <GoverningBodyPage /> },
+              { key: 'events', label: 'Events', children: <EventsPage /> },
+              { key: 'broadcast', label: 'Broadcast', children: <BroadcastPage /> },
               { key: 'about', label: 'About', children: <AboutPage /> },
               { key: 'facilities', label: 'Facilities', children: <FacilitiesPage /> },
               { key: 'settings', label: 'Settings', children: <SettingsPage /> },
