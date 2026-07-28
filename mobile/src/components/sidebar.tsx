@@ -23,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'members', label: 'Member Directory', icon: 'people-outline' },
   { name: 'governing-body', label: 'Governing Body', icon: 'ribbon-outline' },
   { name: 'events', label: 'Events', icon: 'calendar-outline' },
+  { name: 'rulebook', label: 'Rule Book', icon: 'document-text-outline' },
   { name: 'about', label: 'About Us', icon: 'information-circle-outline' },
   { name: 'facilities', label: 'Facilities', icon: 'business-outline' },
   { name: 'contact', label: 'Contact Us', icon: 'call-outline' },

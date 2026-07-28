@@ -23,6 +23,7 @@ export default function AppLayout() {
       <Drawer.Screen name="governing-body" options={{ title: 'Governing Body' }} />
       <Drawer.Screen name="events" options={{ title: 'Events' }} />
       <Drawer.Screen name="notifications" options={{ title: 'Notifications', headerRight: () => null }} />
+      <Drawer.Screen name="rulebook" options={{ title: 'Rule Book' }} />
       <Drawer.Screen name="about" options={{ title: 'About Us' }} />
       <Drawer.Screen name="facilities" options={{ title: 'Facilities' }} />
       <Drawer.Screen name="contact" options={{ title: 'Contact Us' }} />

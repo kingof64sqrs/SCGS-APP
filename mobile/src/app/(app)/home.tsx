@@ -23,7 +23,7 @@ const GRID_GAP = Spacing.two;
 const SCREEN_PADDING = Spacing.four * 2; // ScreenScroll padding on both sides
 
 type QuickLink = {
-  href: '/members' | '/governing-body' | '/events' | '/about' | '/facilities' | '/contact';
+  href: '/members' | '/governing-body' | '/events' | '/rulebook' | '/about' | '/facilities' | '/contact';
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
 };
@@ -32,10 +32,14 @@ const QUICK_LINKS: QuickLink[] = [
   { href: '/members', label: 'Members', icon: 'people-outline' },
   { href: '/governing-body', label: 'Governing Body', icon: 'ribbon-outline' },
   { href: '/events', label: 'Events', icon: 'calendar-outline' },
+  { href: '/rulebook', label: 'Rule Book', icon: 'document-text-outline' },
   { href: '/about', label: 'About Us', icon: 'information-circle-outline' },
   { href: '/facilities', label: 'Facilities', icon: 'business-outline' },
   { href: '/contact', label: 'Contact', icon: 'call-outline' },
 ];
+
+// Number of grid rows needed to show every quick link.
+const GRID_ROWS = Math.ceil(QUICK_LINKS.length / 3);
 
 function factIcon(label: string): keyof typeof Ionicons.glyphMap {
   const l = label.toLowerCase();
@@ -115,6 +119,25 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* ── Complete your profile CTA ───────────────────────────── */}
+      <Pressable
+        onPress={() => router.push('/edit-profile')}
+        style={({ pressed }) => [
+          styles.profileCta,
+          { backgroundColor: theme.tint, opacity: pressed ? 0.9 : 1 },
+        ]}>
+        <View style={styles.ctaIcon}>
+          <Ionicons name="person-circle-outline" size={26} color="#fff" />
+        </View>
+        <View style={styles.ctaText}>
+          <ThemedText style={styles.ctaTitle}>Complete your profile</ThemedText>
+          <ThemedText style={styles.ctaSub} numberOfLines={2}>
+            Add your photo, WhatsApp, family &amp; more so members can reach you.
+          </ThemedText>
+        </View>
+        <Ionicons name="arrow-forward-circle" size={24} color="#fff" />
+      </Pressable>
+
       {/* ── Events & Updates ────────────────────────────────────── */}
       {events && events.length > 0 ? <EventTicker events={events} /> : null}
 
@@ -122,7 +145,7 @@ export default function HomeScreen() {
       <View>
         <ThemedText type="smallBold" style={styles.sectionTitle}>Quick Access</ThemedText>
         {/* Render rows manually so every item has an exact pixel width — no flex-wrap rounding errors */}
-        {[0, 1].map((row) => (
+        {Array.from({ length: GRID_ROWS }, (_, row) => row).map((row) => (
           <View key={row} style={[styles.gridRow, row > 0 && { marginTop: GRID_GAP }]}>
             {QUICK_LINKS.slice(row * COLS, row * COLS + COLS).map((link) => (
               <Pressable
@@ -257,6 +280,24 @@ const styles = StyleSheet.create({
 
   /* ── Quick Access ──────────────────────────────────────────── */
   sectionTitle: { marginBottom: Spacing.two },
+  profileCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: Spacing.four,
+  },
+  ctaIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: { flex: 1, gap: 1 },
+  ctaTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  ctaSub: { color: 'rgba(255,255,255,0.9)', fontSize: 12, lineHeight: 16 },
   gridRow: { flexDirection: 'row', gap: GRID_GAP },
   linkCard: {
     flex: 1,

@@ -52,3 +52,49 @@ export async function registerForPush(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Ensure notification permission + the Android channel exist so LOCAL
+ * notifications can be shown. This needs NO Firebase/FCM — it works in any
+ * build, unlike remote push. Returns true if notifications are allowed.
+ */
+export async function ensureNotificationPermissions(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Default',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+    const existing = await Notifications.getPermissionsAsync();
+    let status = existing.status;
+    if (status !== 'granted') {
+      status = (await Notifications.requestPermissionsAsync()).status;
+    }
+    return status === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Show an immediate LOCAL notification (banner + sound). Works with no FCM /
+ * Firebase — used to alert the user of new items while the app polls.
+ */
+export async function fireLocalNotification(
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: { title, body, data: data ?? {}, sound: 'default' },
+      trigger: null, // fire now
+    });
+  } catch {
+    // notifications unavailable — ignore
+  }
+}
