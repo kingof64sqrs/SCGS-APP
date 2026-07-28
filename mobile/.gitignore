@@ -45,4 +45,5 @@ example
 
 json/
 /json
-google-services.json
+# google-services.json is intentionally committed (client-side Firebase config, safe in Android APKs)
+# google-services.json

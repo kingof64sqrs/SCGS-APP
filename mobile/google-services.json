@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237153561934",
+    "project_id": "scgs-app",
+    "storage_bucket": "scgs-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237153561934:android:cce73173f260dad07a021f",
+        "android_client_info": {
+          "package_name": "com.kingof64sqrs.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDP9OxtBrqonNGPLE0w_twLlZCgj97uUBw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
