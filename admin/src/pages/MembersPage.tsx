@@ -57,6 +57,33 @@ type PagedMembers = {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
+/**
+ * Every editable field, blank. `setFieldsValue` only touches the keys it is
+ * given, and the API omits optional fields the member has never filled in — so
+ * without this the previously opened member's values stay in the form, and
+ * saving writes them onto whoever is open now.
+ */
+const BLANK_FORM: Record<string, string> = {
+  name: '',
+  email: '',
+  phone: '',
+  whatsapp: '',
+  bloodGroup: '',
+  address: '',
+  dateOfBirth: '',
+  nativePlace: '',
+  gnati: '',
+  maritalStatus: '',
+  occupation: '',
+  occupationDetails: '',
+  officeAddress: '',
+  father: '',
+  mother: '',
+  spouse: '',
+  children: '',
+  siblings: '',
+};
+
 export default function MembersPage() {
   const [rows, setRows] = useState<Member[]>([]);
   const [total, setTotal] = useState(0);
@@ -117,16 +144,18 @@ export default function MembersPage() {
     setEditing(null);
     setCreating(true);
     form.resetFields();
-    form.setFieldsValue({ bloodGroup: 'O+' });
+    form.setFieldsValue({ ...BLANK_FORM, bloodGroup: 'O+' });
   };
   const openEdit = async (m: Member) => {
     setCreating(false);
     setEditing(m);
-    form.setFieldsValue(m); // fill with what we have from the list immediately
+    form.resetFields();
+    // Fill with what the list gave us immediately, over a blank slate.
+    form.setFieldsValue({ ...BLANK_FORM, ...m });
     try {
       // Fetch the full profile (list projection omits extended fields).
       const full = await api<Member>(`/members/${encodeURIComponent(m.samajId)}`);
-      form.setFieldsValue(full);
+      form.setFieldsValue({ ...BLANK_FORM, ...full });
     } catch {
       // keep the list values if the full fetch fails
     }
