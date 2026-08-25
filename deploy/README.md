@@ -7,6 +7,8 @@ How this server runs the app. Three pieces:
 | MongoDB    | Docker `scgs-mongo`  | `127.0.0.1:27017`       | `mongo:7`, auth on, data in volume `deploy_scgs-mongo-data` |
 | Backend    | pm2 `scgs-backend`   | `0.0.0.0:5000`          | Express + TypeScript (run via `tsx`), API at `/api` |
 | Admin UI   | pm2 `scgs-admin`     | `0.0.0.0:3000`          | Vite/React build + reverse proxy `/api` → `:5000`   |
+| API tunnel | pm2 `scgs-tunnel-api`   | —                    | Cloudflare quick tunnel → `:5000` (public HTTPS)    |
+| UI tunnel  | pm2 `scgs-tunnel-admin` | —                    | Cloudflare quick tunnel → `:3000` (public HTTPS)    |
 
 The admin SPA calls the API on its **own origin** (`fetch('/api/...')`, see
 `admin/src/api.ts`). That is why `admin/server.mjs` proxies `/api` to the backend
@@ -126,10 +128,38 @@ Re-save whenever you add or remove a pm2 process:
 pm2 save
 ```
 
+## Cloudflare tunnels
+
+Both services are exposed over public HTTPS by `cloudflared` quick tunnels, run
+under pm2 so they come back on their own:
+
+```bash
+./deploy/tunnel-urls.sh          # current hostnames
+pm2 logs scgs-tunnel-api         # tunnel diagnostics
+```
+
+**The hostnames are ephemeral.** Cloudflare hands out a new
+`*.trycloudflare.com` name every time `cloudflared` restarts — a pm2 restart, a
+crash, or a reboot. Anything holding the old URL (a built mobile app, a
+bookmark) breaks at that moment.
+
+For a URL that survives restarts, use a *named* tunnel instead of a quick one:
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel create scgs
+cloudflared tunnel route dns scgs api.yourdomain.com
+```
+
+then point the pm2 apps at `cloudflared tunnel run scgs`. That needs a domain on
+Cloudflare. Until then, after any tunnel restart re-run `./deploy/tunnel-urls.sh`
+and update `mobile/app.config.ts`, `mobile/src/api/config.ts` and
+`mobile/eas.json`.
+
 ## Notes
 
-- Nothing here terminates TLS. For public access put nginx/Caddy or a Cloudflare
-  tunnel in front — production Android builds reject cleartext HTTP, so the
-  mobile app needs an HTTPS origin (see `SETUP-NOTES.md` §3).
+- Nothing on the host terminates TLS — the tunnels provide HTTPS. Production
+  Android builds reject cleartext HTTP, so the mobile app must use a tunnel URL
+  and never `http://<ip>:5000` (see `SETUP-NOTES.md` §3).
 - The host firewall (`ufw`) is inactive; ports 3000/5000 are governed by the
   cloud security group.
