@@ -83,8 +83,9 @@ Notifications screen always lists everything. FCM only adds delivery to a
 
 - The built app reads `EXPO_PUBLIC_API_URL` (see `mobile/eas.json` build
   profiles → currently the HTTPS Cloudflare tunnel).
-- **Use the HTTPS tunnel, not `http://<ip>:8000`** — production Android builds
-  block cleartext HTTP.
+- **Use the HTTPS tunnel, not `http://<ip>:5000`** — production Android builds
+  block cleartext HTTP. (The API listens on port **5000** on the server; see
+  `deploy/README.md`.)
 - The Cloudflare quick-tunnel URL is **ephemeral** (changes if the tunnel
   restarts). For a stable URL, set up a named Cloudflare tunnel and update
   `mobile/eas.json` + `mobile/app.config.ts` `DEFAULT_API_URL`.
@@ -93,8 +94,25 @@ Notifications screen always lists everything. FCM only adds delivery to a
 
 ## 4. Other data files
 
-- **Member roster import:** `samaj_members_template.xlsx` was imported via
-  `cd backend && npm run import`. (Not required at runtime.)
+- **Member roster import:** `samaj_members_template.xlsx` (repo root) was
+  imported via `cd backend && npm run import` — 2,222 members. Re-running it
+  replaces the whole members collection; see `deploy/README.md`.
 - **Dummy events with banners:** `cd backend && npm run seed:events`.
-- **Admin panel:** served at `/admin`, key `ADMIN_KEY` in `backend/.env`
-  (default `scgs-admin`; can be changed in the admin Settings tab).
+- **Admin panel:** `http://<host>:3000/` (also served by the API at
+  `http://<host>:5000/admin`), key `ADMIN_KEY` in `backend/.env` — can be
+  changed in the admin Settings tab.
+
+---
+
+## 5. How the server runs it
+
+MongoDB in Docker, backend and admin panel under pm2:
+
+| Piece    | Process             | Port              |
+| -------- | ------------------- | ----------------- |
+| MongoDB  | Docker `scgs-mongo` | `127.0.0.1:27017` |
+| Backend  | pm2 `scgs-backend`  | `5000`            |
+| Admin UI | pm2 `scgs-admin`    | `3000`            |
+
+Full operational detail — config files, restart/deploy commands, backups — is in
+**`deploy/README.md`**.

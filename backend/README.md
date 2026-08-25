@@ -43,7 +43,9 @@ truth for each feature's shape and inferred types.
 ## Requirements
 
 - Node.js v20+
-- MongoDB reachable at `mongodb://127.0.0.1:27017` (database `scgs`)
+- MongoDB reachable at `mongodb://127.0.0.1:27017` (database `scgs`) —
+  on the server this is the Dockerised `scgs-mongo` container, which has auth
+  enabled, so `MONGODB_URI` must carry credentials + `?authSource=admin`
 
 ## Setup
 
@@ -59,7 +61,7 @@ cp .env.example .env   # adjust if needed
 | ------------ | ------------------------------ | -------------------- |
 | `MONGODB_URI`| `mongodb://127.0.0.1:27017`    | MongoDB connection   |
 | `DB_NAME`    | `scgs`                         | Database name        |
-| `PORT`       | `4000`                         | HTTP listen port     |
+| `PORT`       | `4000`                         | HTTP listen port (deployed: `5000`) |
 
 ## Commands
 

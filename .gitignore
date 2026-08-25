@@ -1,0 +1,9 @@
+# Deployment secrets and runtime output — never commit these.
+deploy/.env
+deploy/logs/
+deploy/backups/
+
+# Member roster: contains personal data (names, phones, addresses) for ~2,200
+# people. Keep it on the server, out of the repository.
+samaj_members_template.xlsx
+*.xlsx

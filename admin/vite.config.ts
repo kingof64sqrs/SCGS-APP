@@ -13,6 +13,6 @@ export default defineConfig({
   },
   server: {
     // Dev convenience: proxy API calls to the local backend.
-    proxy: { '/api': 'http://localhost:8000' },
+    proxy: { '/api': 'http://localhost:5000' },
   },
 });

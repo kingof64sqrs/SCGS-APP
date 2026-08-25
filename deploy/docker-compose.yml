@@ -1,0 +1,25 @@
+# MongoDB for the SCGS backend.
+#   docker compose -f deploy/docker-compose.yml up -d
+services:
+  mongo:
+    image: mongo:7
+    container_name: scgs-mongo
+    restart: unless-stopped
+    command: ["--bind_ip_all"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-scgsadmin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?set MONGO_PASSWORD in deploy/.env}
+    ports:
+      # Bound to loopback only — the API talks to it locally, nothing external should.
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - scgs-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  scgs-mongo-data:
