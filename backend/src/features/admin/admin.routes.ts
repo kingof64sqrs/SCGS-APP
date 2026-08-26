@@ -123,6 +123,7 @@ adminRouter.put(
 const extendedProfileFields = {
   whatsapp: z.string().trim().optional(),
   dateOfBirth: z.string().trim().optional(),
+  weddingAnniversary: z.string().trim().optional(),
   nativePlace: z.string().trim().optional(),
   gnati: z.string().trim().optional(),
   maritalStatus: z.string().trim().optional(),

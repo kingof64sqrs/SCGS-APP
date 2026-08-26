@@ -7,7 +7,7 @@ type About = {
   title: string;
   paragraphs: string[];
   facts: { label: string; value: string }[];
-  contact: { address: string; phone: string; email: string };
+  contact: { address: string; phone: string; email: string; website?: string };
   facilities: string[];
   services: string[];
 };
@@ -35,6 +35,7 @@ export default function AboutPage() {
           address: a.contact?.address,
           phone: a.contact?.phone,
           email: a.contact?.email,
+          website: a.contact?.website,
           facilities: toLines(a.facilities),
           services: toLines(a.services),
         });
@@ -61,6 +62,7 @@ export default function AboutPage() {
         address: (v.address ?? '').trim(),
         phone: (v.phone ?? '').trim(),
         email: (v.email ?? '').trim(),
+        website: (v.website ?? '').trim(),
       },
       facilities: fromLines(v.facilities ?? ''),
       services: fromLines(v.services ?? ''),
@@ -97,6 +99,9 @@ export default function AboutPage() {
         </Form.Item>
         <Form.Item name="phone" label="Phone">
           <Input />
+        </Form.Item>
+        <Form.Item name="website" label="Website">
+          <Input placeholder="https://…" />
         </Form.Item>
         <Form.Item name="email" label="Email">
           <Input />

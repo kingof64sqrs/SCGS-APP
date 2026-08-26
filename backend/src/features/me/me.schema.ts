@@ -13,6 +13,7 @@ export const updateProfileSchema = z
     bloodGroup: optionalText(),
     // Extended / optional profile.
     dateOfBirth: optionalText(),
+    weddingAnniversary: optionalText(),
     nativePlace: optionalText(),
     gnati: optionalText(),
     maritalStatus: optionalText(),

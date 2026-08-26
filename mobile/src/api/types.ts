@@ -2,6 +2,7 @@
 export type MemberProfileExtra = {
   whatsapp?: string;
   dateOfBirth?: string;
+  weddingAnniversary?: string;
   nativePlace?: string;
   gnati?: string;
   maritalStatus?: string;
@@ -48,6 +49,7 @@ export type AboutContent = {
     address: string;
     phone: string;
     email: string;
+    website?: string;
   };
   facilities: string[];
   services: string[];

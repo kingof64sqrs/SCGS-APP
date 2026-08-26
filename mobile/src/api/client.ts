@@ -21,6 +21,7 @@ type ProfilePatch = Partial<
     | 'bloodGroup'
     | 'whatsapp'
     | 'dateOfBirth'
+    | 'weddingAnniversary'
     | 'nativePlace'
     | 'gnati'
     | 'maritalStatus'

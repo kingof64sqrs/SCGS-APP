@@ -73,6 +73,9 @@ export default function AboutScreen() {
         <IconRow icon="location-outline" text={data.contact.address} />
         <IconRow icon="call-outline" text={data.contact.phone} />
         <IconRow icon="mail-outline" text={data.contact.email} />
+        {data.contact.website ? (
+          <IconRow icon="globe-outline" text={data.contact.website} />
+        ) : null}
       </Card>
     </ScreenScroll>
   );

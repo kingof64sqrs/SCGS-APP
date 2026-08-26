@@ -8,6 +8,8 @@ export const aboutSchema = z.object({
     address: z.string(),
     phone: z.string(),
     email: z.string(),
+    // Optional so About documents saved before this field existed still validate.
+    website: z.string().optional().default(""),
   }),
   facilities: z.array(z.string()),
   services: z.array(z.string()),

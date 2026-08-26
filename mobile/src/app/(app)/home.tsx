@@ -41,17 +41,42 @@ const QUICK_LINKS: QuickLink[] = [
 // Number of grid rows needed to show every quick link.
 const GRID_ROWS = Math.ceil(QUICK_LINKS.length / 3);
 
-function factIcon(label: string): keyof typeof Ionicons.glyphMap {
+function isLocation(label: string) {
   const l = label.toLowerCase();
-  if (l.includes('location') || l.includes('address')) return 'location-outline';
+  return l.includes('location') || l.includes('address') || l.includes('venue');
+}
+
+const isUrl = (v: string) => /^https?:\/\//i.test(v);
+const isEmail = (v: string) => v.includes('@');
+/** A phone number, not a year or a floor area — needs at least 10 digits. */
+const isPhone = (v: string) => v.replace(/\D/g, '').length >= 10;
+
+function factIcon(label: string, value: string): keyof typeof Ionicons.glyphMap {
+  const l = label.toLowerCase();
+  const v = value.trim();
+  if (isLocation(l)) return 'location-outline';
+  if (isUrl(v)) return 'globe-outline';
+  if (isEmail(v)) return 'mail-outline';
+  if (isPhone(v)) return 'call-outline';
   if (l.includes('area') || l.includes('building')) return 'business-outline';
   if (l.includes('member')) return 'people-outline';
   return 'information-circle-outline';
 }
 
-function isLocation(label: string) {
-  const l = label.toLowerCase();
-  return l.includes('location') || l.includes('address') || l.includes('venue');
+/**
+ * Rows that can be acted on: dial a number, write an email, open the website or
+ * the Samaj on a map. Returns null for plain informational rows.
+ */
+function factLink(
+  label: string,
+  value: string,
+): { url: string; icon: keyof typeof Ionicons.glyphMap } | null {
+  const v = value.trim();
+  if (isLocation(label)) return { url: MAPS_URL, icon: 'open-outline' };
+  if (isUrl(v)) return { url: v, icon: 'open-outline' };
+  if (isEmail(v)) return { url: `mailto:${v}`, icon: 'mail-outline' };
+  if (isPhone(v)) return { url: `tel:${v.replace(/[^\d+]/g, '')}`, icon: 'call-outline' };
+  return null;
 }
 
 export default function HomeScreen() {
@@ -172,11 +197,11 @@ export default function HomeScreen() {
           <ThemedText type="smallBold" style={styles.sectionTitle}>At a Glance</ThemedText>
           <View style={[styles.glanceCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
             {detailFacts.map((fact, i) => {
-              const locFact = isLocation(fact.label);
-              const Row = locFact ? Pressable : View;
-              const rowProps = locFact
+              const link = factLink(fact.label, fact.value);
+              const Row = link ? Pressable : View;
+              const rowProps = link
                 ? {
-                    onPress: () => Linking.openURL(MAPS_URL),
+                    onPress: () => Linking.openURL(link.url).catch(() => {}),
                     style: ({ pressed }: { pressed: boolean }) => [
                       styles.glanceRow,
                       i > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
@@ -192,21 +217,19 @@ export default function HomeScreen() {
 
               return (
                 // @ts-ignore — Row is conditionally View or Pressable
-                <Row key={fact.label} {...rowProps}>
-                  <View style={[styles.glanceIcon, { backgroundColor: locFact ? `${theme.tint}25` : `${theme.tint}18` }]}>
-                    <Ionicons name={factIcon(fact.label)} size={16} color={theme.tint} />
+                <Row key={`${fact.label}-${i}`} {...rowProps}>
+                  <View style={[styles.glanceIcon, { backgroundColor: link ? `${theme.tint}25` : `${theme.tint}18` }]}>
+                    <Ionicons name={factIcon(fact.label, fact.value)} size={16} color={theme.tint} />
                   </View>
                   <View style={styles.glanceText}>
                     <ThemedText type="small" themeColor="textSecondary">{fact.label}</ThemedText>
                     <ThemedText
                       type="small"
-                      style={locFact ? { color: theme.tint, textDecorationLine: 'underline' } : undefined}>
+                      style={link ? { color: theme.tint, textDecorationLine: 'underline' } : undefined}>
                       {fact.value}
                     </ThemedText>
                   </View>
-                  {locFact ? (
-                    <Ionicons name="open-outline" size={15} color={theme.tint} />
-                  ) : null}
+                  {link ? <Ionicons name={link.icon} size={15} color={theme.tint} /> : null}
                 </Row>
               );
             })}

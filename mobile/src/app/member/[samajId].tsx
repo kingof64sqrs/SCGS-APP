@@ -102,6 +102,7 @@ export default function MemberDetailScreen() {
 
   const personal = filled([
     { icon: 'calendar-outline', label: 'Date of Birth', value: member.dateOfBirth },
+    { icon: 'heart-outline', label: 'Wedding Anniversary', value: member.weddingAnniversary },
     { icon: 'earth-outline', label: 'Native Place', value: member.nativePlace },
     { icon: 'people-circle-outline', label: 'Gnati', value: member.gnati },
     { icon: 'heart-outline', label: 'Marital Status', value: member.maritalStatus },

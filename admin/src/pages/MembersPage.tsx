@@ -34,6 +34,7 @@ type Member = {
   bloodGroup: string;
   whatsapp?: string;
   dateOfBirth?: string;
+  weddingAnniversary?: string;
   nativePlace?: string;
   gnati?: string;
   maritalStatus?: string;
@@ -71,6 +72,7 @@ const BLANK_FORM: Record<string, string> = {
   bloodGroup: '',
   address: '',
   dateOfBirth: '',
+  weddingAnniversary: '',
   nativePlace: '',
   gnati: '',
   maritalStatus: '',
@@ -359,6 +361,9 @@ export default function MembersPage() {
                   <>
                     <Form.Item name="dateOfBirth" label="Date of Birth">
                       <Input placeholder="e.g. 15 Aug 1980" />
+                    </Form.Item>
+                    <Form.Item name="weddingAnniversary" label="Wedding Anniversary">
+                      <Input placeholder="e.g. 12 Feb 2005" />
                     </Form.Item>
                     <Form.Item name="nativePlace" label="Native Place (Gujarat)">
                       <Input />

@@ -33,6 +33,7 @@ type FieldKey =
   | 'email'
   | 'address'
   | 'dateOfBirth'
+  | 'weddingAnniversary'
   | 'nativePlace'
   | 'gnati'
   | 'occupation'
@@ -62,6 +63,7 @@ const CONTACT_FIELDS: FieldDef[] = [
 
 const PERSONAL_FIELDS: FieldDef[] = [
   { key: 'dateOfBirth', label: 'Date of Birth', placeholder: 'e.g. 15 Aug 1980' },
+  { key: 'weddingAnniversary', label: 'Wedding Anniversary', placeholder: 'e.g. 12 Feb 2005' },
   { key: 'nativePlace', label: 'Native Place (in Gujarat)', placeholder: 'e.g. Jamnagar' },
   { key: 'gnati', label: 'Gnati (Community)', placeholder: 'e.g. Lohana' },
 ];

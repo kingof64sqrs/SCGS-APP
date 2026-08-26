@@ -13,6 +13,10 @@ export const about: AboutContent = {
     { label: "Founded", value: "1942" },
     { label: "Members", value: "2200+" },
     { label: "Building Area", value: "70,000 sq. ft." },
+    { label: "Admin & Hall Facilities", value: "9486256227" },
+    { label: "Guest House", value: "9486412014" },
+    { label: "Email", value: "cbegujaratisamaj@gmail.com" },
+    { label: "Website", value: "https://gujaratisamajcoimbatore.org/" },
     { label: "Location", value: "Mettupalayam Rd, R.S. Puram, Coimbatore" },
   ],
   contact: {
@@ -20,6 +24,7 @@ export const about: AboutContent = {
       "Shree Coimbatore Gujarati Samaj, No. 662, Mettuppalayam Rd, R.S. Puram, Coimbatore - 641002, Tamil Nadu, India",
     phone: "+91 422 2550049",
     email: "cbegujaratisamaj@gmail.com",
+    website: "https://gujaratisamajcoimbatore.org/",
   },
   facilities: [
     "Community (Wedding) Hall Complex",

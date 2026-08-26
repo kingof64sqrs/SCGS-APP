@@ -17,6 +17,7 @@ export const memberSchema = z.object({
   // Extended profile — all optional, filled by the member over time.
   whatsapp: opt(),
   dateOfBirth: opt(),
+  weddingAnniversary: opt(),
   nativePlace: opt(),
   gnati: opt(),
   maritalStatus: opt(),
@@ -35,6 +36,7 @@ export type Member = z.infer<typeof memberSchema>;
 /** Optional profile field keys (everything a member may fill beyond the core). */
 export const OPTIONAL_PROFILE_KEYS = [
   "dateOfBirth",
+  "weddingAnniversary",
   "nativePlace",
   "gnati",
   "maritalStatus",

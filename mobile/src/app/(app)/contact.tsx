@@ -27,6 +27,9 @@ export default function ContactScreen() {
   const rows = [
     { icon: 'call-outline' as const, label: 'Phone', value: c.phone, url: `tel:${c.phone.replace(/\s/g, '')}` },
     { icon: 'mail-outline' as const, label: 'Email', value: c.email, url: `mailto:${c.email}` },
+    ...(c.website
+      ? [{ icon: 'globe-outline' as const, label: 'Website', value: c.website, url: c.website }]
+      : []),
     {
       icon: 'location-outline' as const,
       label: 'Address',
