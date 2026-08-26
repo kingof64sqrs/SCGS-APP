@@ -70,6 +70,31 @@ export default function ProfileScreen() {
     }
   };
 
+  // Only show what the member has actually filled in — the roster leaves most
+  // of these blank, and empty rows read as broken.
+  type Row = { icon: keyof typeof Ionicons.glyphMap; label: string; value?: string };
+  const detailRows: Row[] = (
+    [
+      { icon: 'mail-outline', label: 'Email', value: user.email },
+      { icon: 'call-outline', label: 'Phone', value: user.phone },
+      { icon: 'logo-whatsapp', label: 'WhatsApp', value: user.whatsapp },
+      { icon: 'location-outline', label: 'Address', value: user.address },
+      { icon: 'calendar-outline', label: 'Date of Birth', value: user.dateOfBirth },
+      { icon: 'rose-outline', label: 'Wedding Anniversary', value: user.weddingAnniversary },
+      { icon: 'earth-outline', label: 'Native Place', value: user.nativePlace },
+      { icon: 'people-circle-outline', label: 'Gnati', value: user.gnati },
+      { icon: 'heart-outline', label: 'Marital Status', value: user.maritalStatus },
+      { icon: 'briefcase-outline', label: 'Occupation', value: user.occupation },
+      { icon: 'document-text-outline', label: 'Occupation Details', value: user.occupationDetails },
+      { icon: 'business-outline', label: 'Office Address', value: user.officeAddress },
+      { icon: 'man-outline', label: 'Father', value: user.father },
+      { icon: 'woman-outline', label: 'Mother', value: user.mother },
+      { icon: 'heart-circle-outline', label: 'Spouse', value: user.spouse },
+      { icon: 'happy-outline', label: 'Children', value: user.children },
+      { icon: 'people-outline', label: 'Siblings', value: user.siblings },
+    ] as Row[]
+  ).filter((r) => r.value && r.value.trim());
+
   return (
     <ScreenScroll>
       {/* Profile header */}
@@ -104,14 +129,20 @@ export default function ProfileScreen() {
         </Pressable>
       </Card>
 
-      {/* Details */}
+      {/* Details — contact fields plus whichever optional ones are filled in. */}
       <ThemedText type="smallBold" style={styles.sectionTitle}>
         My Details
       </ThemedText>
       <Card style={styles.detailsCard}>
-        <DetailRow icon="mail-outline" label="Email" value={user.email} />
-        <DetailRow icon="call-outline" label="Phone" value={user.phone} />
-        <DetailRow icon="location-outline" label="Address" value={user.address} last />
+        {detailRows.map((r, i) => (
+          <DetailRow
+            key={r.label}
+            icon={r.icon}
+            label={r.label}
+            value={r.value ?? ''}
+            last={i === detailRows.length - 1}
+          />
+        ))}
       </Card>
 
       {/* Appearance */}
