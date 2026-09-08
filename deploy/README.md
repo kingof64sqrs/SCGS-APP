@@ -6,7 +6,8 @@ How this server runs the app. Three pieces:
 | ---------- | -------------------- | ----------------------- | ------------------------------------------------- |
 | MongoDB    | Docker `scgs-mongo`  | `127.0.0.1:27017`       | `mongo:7`, auth on, data in volume `deploy_scgs-mongo-data` |
 | Backend    | pm2 `scgs-backend`   | `0.0.0.0:5000`          | Express + TypeScript (run via `tsx`), API at `/api` |
-| Admin UI   | pm2 `scgs-admin`     | `0.0.0.0:3000`          | Vite/React build + reverse proxy `/api` → `:5000`   |
+| Admin UI   | pm2 `scgs-admin`     | `0.0.0.0:3000`          | Vite/React build + reverse proxy `/api` and `/app` → `:5000` |
+| Web app    | served by the API    | `/app`                  | the Expo app exported for the browser              |
 | API tunnel | pm2 `scgs-tunnel-api`   | —                    | Cloudflare quick tunnel → `:5000` (public HTTPS)    |
 | UI tunnel  | pm2 `scgs-tunnel-admin` | —                    | Cloudflare quick tunnel → `:3000` (public HTTPS)    |
 
@@ -45,6 +46,29 @@ pm2 restart all
 
 Logs also land in `deploy/logs/` and are rotated by `pm2-logrotate`
 (10 MB, 7 files, compressed).
+
+## The mobile app in a browser
+
+The Expo app is exported for the web and served at **`/app`** on both tunnels —
+same code, same screens, no separate frontend.
+
+```bash
+cd mobile && npm run build:web     # exports and copies into backend/public/app
+pm2 restart scgs-backend
+```
+
+Two things make it work under a sub-path rather than at the domain root:
+
+- `EXPO_WEB_BASE_URL=/app` (read by `app.config.ts` into `experiments.baseUrl`)
+  so every asset URL is emitted as `/app/...`. Native builds leave it unset.
+- On web `src/api/config.ts` returns an **empty** API base, so the app calls
+  `/api/...` on whatever host served the page. Both hosts proxy `/api` to the
+  backend, which means no CORS and nothing to edit when a tunnel URL rotates.
+
+The export is `output: "static"`, so each route also ships a pre-rendered
+`.html`. The backend serves them with `extensions: ["html"]` (so `/app/home`
+finds `home.html`) and falls back to `index.html` for dynamic routes such as
+`/app/member/L%20A-1`, where expo-router takes over on the client.
 
 ## Deploying a change
 

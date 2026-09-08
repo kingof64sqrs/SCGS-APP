@@ -48,6 +48,17 @@ export function createApp(): Express {
   app.get("/admin", (_req: Request, res: Response) => {
     res.sendFile(path.join(publicDir, "admin", "index.html"));
   });
+
+  // The mobile app, exported for the browser (expo export --platform web).
+  // `extensions` lets /app/home resolve to home.html; anything without its own
+  // file — dynamic routes such as /app/member/L%20A-1 — falls back to the shell
+  // and expo-router takes over on the client.
+  const webAppDir = path.join(publicDir, "app");
+  app.use("/app", express.static(webAppDir, { extensions: ["html"] }));
+  app.get("/app/*", (_req: Request, res: Response) => {
+    res.sendFile(path.join(webAppDir, "index.html"));
+  });
+
   app.use(express.static(publicDir));
 
   app.use(notFoundHandler);

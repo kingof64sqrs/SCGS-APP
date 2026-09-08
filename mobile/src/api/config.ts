@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 const DEFAULT_API_URL = 'https://sellers-afterwards-pacific-chronicles.trycloudflare.com';
 
@@ -14,6 +15,11 @@ const DEFAULT_API_URL = 'https://sellers-afterwards-pacific-chronicles.trycloudf
  *  - iOS simulator / web: localhost
  */
 function resolveBaseUrl(): string {
+  // On the web build the page is served by a host that reverse-proxies /api to
+  // the backend, so talk to our own origin: no CORS, and nothing to change when
+  // a tunnel hostname rotates. An explicit EXPO_PUBLIC_API_URL still wins.
+  if (Platform.OS === 'web' && !process.env.EXPO_PUBLIC_API_URL) return '';
+
   const fromConfig = Constants.expoConfig?.extra?.scgsApiUrl;
   if (typeof fromConfig === 'string' && fromConfig.trim()) {
     return fromConfig.replace(/\/$/, '');

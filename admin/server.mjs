@@ -69,7 +69,10 @@ function sendFile(res, file, status = 200) {
 }
 
 const server = http.createServer((req, res) => {
-  if (req.url.startsWith('/api/')) return proxy(req, res);
+  // /api and /app both live on the backend; everything else is the panel.
+  if (req.url.startsWith('/api/') || req.url === '/app' || req.url.startsWith('/app/')) {
+    return proxy(req, res);
+  }
 
   let pathname;
   try {
