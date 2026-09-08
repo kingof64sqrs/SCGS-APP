@@ -36,6 +36,18 @@ type ProfilePatch = Partial<
   >
 >;
 
+/**
+ * Called when the server rejects our session token. A token can go stale on its
+ * own — a biometric unlock restores the copy saved at enrolment, which may
+ * predate a backend redeploy — and without this the app keeps a dead session:
+ * it still looks signed in while every write silently fails with a 401.
+ */
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(fn: (() => void) | null): void {
+  onUnauthorized = fn;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -77,6 +89,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const data = text ? JSON.parse(text) : null;
 
   if (!res.ok) {
+    // A 401 on a request we *did* authenticate means the token is no longer
+    // valid; drop the session so the user is sent back to the login screen.
+    if (res.status === 401 && token) onUnauthorized?.();
     const message = (data && (data.error || data.message)) || `Request failed (${res.status})`;
     throw new ApiError(message, res.status);
   }

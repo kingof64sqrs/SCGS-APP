@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { api } from '@/api/client';
+import { api, setUnauthorizedHandler } from '@/api/client';
 import type { AuthUser } from '@/api/types';
 import {
   biometricAvailable,
@@ -118,6 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearBiometricSession(),
     ]);
   }, []);
+
+  // Any authenticated call that comes back 401 means this session is dead.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void signOut();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [signOut]);
 
   const updateUser = useCallback(async (next: AuthUser) => {
     setUser(next);
