@@ -2,7 +2,7 @@
   "expo": {
     "name": "SCGS App",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/scgs-logo.png",
     "scheme": "mobile",
@@ -19,6 +19,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.kingof64sqrs.mobile",
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
