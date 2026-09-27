@@ -7,3 +7,6 @@ deploy/backups/
 # people. Keep it on the server, out of the repository.
 samaj_members_template.xlsx
 *.xlsx
+
+# Playwright MCP screenshots/logs
+.playwright-mcp/
