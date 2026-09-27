@@ -1,4 +1,5 @@
 import { Drawer } from 'expo-router/drawer';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 
 import { NotificationsBell } from '@/components/notifications-bell';
 import { Sidebar } from '@/components/sidebar';
@@ -6,6 +7,11 @@ import { useTheme } from '@/hooks/use-theme';
 
 export default function AppLayout() {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
+  // Laptop/desktop: pin the sidebar permanently and drop the hamburger;
+  // phones/tablets keep the slide-over drawer.
+  const isWide = width >= 1024;
+
   return (
     <Drawer
       drawerContent={(props) => <Sidebar {...props} />}
@@ -14,8 +20,14 @@ export default function AppLayout() {
         headerTintColor: theme.text,
         headerTitleStyle: { fontWeight: '600' },
         headerShadowVisible: false,
-        drawerStyle: { backgroundColor: theme.background, width: 300 },
-        drawerType: 'front',
+        drawerStyle: {
+          backgroundColor: theme.background,
+          width: 300,
+          borderRightWidth: isWide ? StyleSheet.hairlineWidth : 0,
+          borderRightColor: theme.border,
+        },
+        drawerType: isWide ? 'permanent' : 'front',
+        ...(isWide ? { headerLeft: () => null } : {}),
         headerRight: () => <NotificationsBell />,
       }}>
       <Drawer.Screen name="home" options={{ title: 'Home' }} />

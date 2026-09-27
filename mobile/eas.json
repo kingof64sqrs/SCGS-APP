@@ -8,7 +8,7 @@
       "developmentClient": true,
       "channel": "development",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://sellers-afterwards-pacific-chronicles.trycloudflare.com"
+        "EXPO_PUBLIC_API_URL": "https://scgs-backend.vercel.app"
       }
     },
     "preview": {
@@ -18,17 +18,22 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://sellers-afterwards-pacific-chronicles.trycloudflare.com"
+        "EXPO_PUBLIC_API_URL": "https://scgs-backend.vercel.app"
       }
     },
     "production": {
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://sellers-afterwards-pacific-chronicles.trycloudflare.com"
+        "EXPO_PUBLIC_API_URL": "https://scgs-backend.vercel.app"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./scgs-mobile-app-f9c62992ed6b.json",
+        "track": "alpha"
+      }
+    }
   }
 }

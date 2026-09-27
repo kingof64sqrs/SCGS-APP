@@ -9,7 +9,11 @@ import { existsSync } from "node:fs";
 
 export const contentRouter = Router();
 
-const assetsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../assets");
+// On Vercel the function is bundled, so import.meta.url no longer maps to the
+// source tree; includeFiles places assets/ at the project root (process.cwd()).
+const assetsDir = process.env.VERCEL
+  ? path.join(process.cwd(), "assets")
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../assets");
 const RULEBOOK_PATH = path.join(assetsDir, "rulebook.pdf");
 const RULEBOOK_FILENAME = "SCGS-Rule-Book.pdf";
 

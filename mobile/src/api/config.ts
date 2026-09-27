@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-const DEFAULT_API_URL = 'https://sellers-afterwards-pacific-chronicles.trycloudflare.com';
+const DEFAULT_API_URL = 'https://scgs-backend.vercel.app';
 
 /**
  * Base URL of the SCGS backend API.

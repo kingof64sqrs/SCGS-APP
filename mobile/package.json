@@ -57,7 +57,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "build:web": "EXPO_WEB_BASE_URL=/app expo export --platform web --output-dir dist && rm -rf ../backend/public/app && cp -r dist ../backend/public/app"
+    "build:web": "EXPO_WEB_BASE_URL=/app expo export --platform web --output-dir dist && node scripts/fix-web-assets.mjs dist && rm -rf ../backend/public/app && cp -r dist ../backend/public/app",
+    "build:website": "expo export --platform web --output-dir dist-website && node scripts/fix-web-assets.mjs dist-website"
   },
   "private": true
 }

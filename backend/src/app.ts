@@ -17,7 +17,12 @@ import { governingBodyRouter } from "./features/governing-body/governing-body.ro
 import { meRouter } from "./features/me/me.routes.js";
 import { membersRouter } from "./features/members/member.routes.js";
 
-const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");
+// On Vercel the function is bundled, so import.meta.url no longer maps to the
+// source tree; the static panel/web app are served by Vercel's CDN instead,
+// but keep the paths valid for any request that falls through to Express.
+const publicDir = process.env.VERCEL
+  ? path.join(process.cwd(), "public")
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");
 
 /** Assemble the Express application: middleware + feature routers + admin panel. */
 export function createApp(): Express {

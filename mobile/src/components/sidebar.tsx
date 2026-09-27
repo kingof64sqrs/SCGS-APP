@@ -40,7 +40,7 @@ export function Sidebar(props: DrawerContentComponentProps) {
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: Math.max(insets.top, Spacing.three) }]}
         showsVerticalScrollIndicator={false}>
         {/* Brand header */}
         <View style={[styles.header, { borderBottomColor: theme.border }]}>

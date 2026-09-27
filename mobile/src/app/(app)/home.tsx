@@ -21,6 +21,7 @@ const MAPS_URL = 'https://maps.app.goo.gl/E7RJxR7uTuniNLjg6';
 const COLS = 3;
 const GRID_GAP = Spacing.two;
 const SCREEN_PADDING = Spacing.four * 2; // ScreenScroll padding on both sides
+const MAX_CONTENT_WIDTH = 760; // must match ScreenScroll's inner maxWidth
 
 type QuickLink = {
   href: '/members' | '/governing-body' | '/events' | '/rulebook' | '/about' | '/facilities' | '/contact';
@@ -85,8 +86,10 @@ export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const { user, token } = useAuth();
 
-  // Exact card width: screen - padding - all gaps between columns
-  const cardWidth = (screenWidth - SCREEN_PADDING - GRID_GAP * (COLS - 1)) / COLS;
+  // Exact card width within the centered content column (which is capped at
+  // MAX_CONTENT_WIDTH on wide screens): content - all gaps between columns.
+  const contentWidth = Math.min(screenWidth - SCREEN_PADDING, MAX_CONTENT_WIDTH);
+  const cardWidth = (contentWidth - GRID_GAP * (COLS - 1)) / COLS;
 
   const { data: about, loading, error, refetch } = useAsyncData(
     useCallback((signal) => api.getAbout(token, signal), [token]),

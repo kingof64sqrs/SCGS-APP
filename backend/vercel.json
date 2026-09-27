@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "cleanUrls": true,
+  "redirects": [{ "source": "/", "destination": "/app", "permanent": false }],
+  "rewrites": [
+    { "source": "/app/:path*", "destination": "/app/index.html" },
+    { "source": "/(.*)", "destination": "/api/index" }
+  ],
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "assets/**",
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
+}

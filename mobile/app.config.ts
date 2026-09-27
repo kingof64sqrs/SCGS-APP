@@ -1,6 +1,6 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-const DEFAULT_API_URL = 'https://sellers-afterwards-pacific-chronicles.trycloudflare.com';
+const DEFAULT_API_URL = 'https://scgs-backend.vercel.app';
 
 function normalizeApiUrl(value: string | undefined): string | undefined {
   const trimmed = value?.trim();

@@ -12,7 +12,7 @@ let db: Db | null = null;
 export async function connect(): Promise<Db> {
   if (db) return db;
 
-  client = new MongoClient(env.mongoUri, { maxPoolSize: 100 });
+  client = new MongoClient(env.mongoUri, { maxPoolSize: 100, serverSelectionTimeoutMS: 8000 });
   await client.connect();
   db = client.db(env.dbName);
   return db;
